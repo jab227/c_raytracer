@@ -2,15 +2,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-typedef struct {
-  double x;
-  double y;
-  double z;
-} vec3_t;
-
-
-
-
 int main(void) {
   const size_t image_width = 256;
   const size_t image_height = 256;
