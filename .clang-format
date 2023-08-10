@@ -1,0 +1,31 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+ContinuationIndentWidth: 4
+
+ColumnLimit: 75
+SortIncludes: true
+BreakBeforeBraces: Linux
+
+PointerAlignment: Right
+DerivePointerAlignment: false
+SpaceAfterCStyleCast: true
+SpacesInCStyleCastParentheses: false
+
+BinPackArguments: false
+BinPackParameters: false
+
+IndentCaseLabels: false
+Cpp11BracedListStyle: false
+
+MaxEmptyLinesToKeep: 2
+AlignTrailingComments: true
+SpacesBeforeTrailingComments: 2
+
+KeepEmptyLinesAtTheStartOfBlocks: false
+AllowShortIfStatementsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+
+PenaltyExcessCharacter: 7
+PenaltyBreakBeforeFirstCallParameter: 50
+
+AlignArrayOfStructures: Left
