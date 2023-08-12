@@ -2,7 +2,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 ContinuationIndentWidth: 4
 
-ColumnLimit: 75
+ColumnLimit: 80
 SortIncludes: true
 BreakBeforeBraces: Linux
 
