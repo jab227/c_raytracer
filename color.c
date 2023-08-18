@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #define CLAMP 255.999
-void color_write(FILE *f, color_t pixel)
+void color_write(FILE *f, Color pixel)
 {
     uint8_t r = (uint8_t) (CLAMP * pixel.r);
     uint8_t g = (uint8_t) (CLAMP * pixel.g);

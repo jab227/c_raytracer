@@ -7,7 +7,7 @@ typedef struct {
     double r;
     double g;
     double b;
-} color_t;
+} Color;
 
-void color_write(FILE *f, color_t pixel);
+void color_write(FILE *f, Color pixel);
 #endif

@@ -3,10 +3,10 @@
 
 #include "vec3.h"
 typedef struct {
-    vec3_t origin;
-    vec3_t direction;
+    Vec3 origin;
+    Vec3 direction;
 } ray_t;
 
-vec3_t ray_at(ray_t r, double t);
+Vec3 ray_at(ray_t r, double t);
 
 #endif
