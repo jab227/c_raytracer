@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,29 +9,40 @@
 #include "ray.h"
 #include "vec3.h"
 
-bool hit_sphere(Vec3 center, double radius, ray_t r)
+
+double hit_sphere(Vec3 center, double radius, Ray r)
 {
     Vec3 oc = vec3_sub(r.origin, center);
     double a = vec3_norm_squared(r.direction);
-    double b = 2.0 * vec3_dot(oc, r.direction);
+    double half_b = vec3_dot(oc, r.direction);
     double c = vec3_norm_squared(oc) - radius * radius;
 
-    double discriminant = b * b - 4 * a * c;
-    return (discriminant >= 0);
+    double discriminant = half_b * half_b - a * c;
+
+    if (discriminant < 0) {
+        return -1.0;
+    } else {
+        return (-half_b - sqrt(discriminant)) / a;
+    }
 }
 
-Color ray_color(ray_t r)
+Color ray_color(Ray r)
 {
     Vec3 center = { .x = 0., .y = 0., .z = -1. };
-    if (hit_sphere(center, 0.5, r)) {
-        //        fprintf(stderr, "here\n");
-        return (Color){ .r = 1.0, .g = 0., .b = 0. };
+    double t = hit_sphere(center, 0.5, r);
+    if (t > 0.0) {
+        Vec3 hit_direction = ray_at(r, t);
+        Vec3 normal_vector = vec3_sub(hit_direction, center);
+        Vec3 unit_normal_vector = vec3_normalize(normal_vector);
+        return (Color){ .r = 0.5 * (unit_normal_vector.x + 1.0),
+                        .g = 0.5 * (unit_normal_vector.y + 1.0),
+                        .b = 0.5 * (unit_normal_vector.z + 1.0) };
     }
     Vec3 unit_direction = vec3_normalize(r.direction);
-    double t = 0.5 * (unit_direction.y + 1.0);
-    return (Color){ .r = (1.0 - t) + (t * 0.5),
-                    .g = (1.0 - t) + (t * 0.7),
-                    .b = (1.0 - t) + (t * 1.0) };
+    double a = 0.5 * (unit_direction.y + 1.0);
+    return (Color){ .r = (1.0 - a) + (a * 0.5),
+                    .g = (1.0 - a) + (a * 0.7),
+                    .b = (1.0 - a) + (a * 1.0) };
 }
 
 Vec3 compute_viewport_upper_left(Vec3 camera_center,
@@ -104,7 +116,7 @@ int main(void)
             Vec3 pixel_center = compute_pixel_center(
                 pixel00_loc, pixel_delta_u, pixel_delta_v, i, j);
             Vec3 ray_direction = vec3_sub(pixel_center, camera_center);
-            ray_t r = { .direction = ray_direction, .origin = camera_center };
+            Ray r = { .direction = ray_direction, .origin = camera_center };
             Color pixel = ray_color(r);
             color_write(stdout, pixel);
         }

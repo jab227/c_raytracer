@@ -5,8 +5,8 @@
 typedef struct {
     Vec3 origin;
     Vec3 direction;
-} ray_t;
+} Ray;
 
-Vec3 ray_at(ray_t r, double t);
+Vec3 ray_at(Ray r, double t);
 
 #endif
