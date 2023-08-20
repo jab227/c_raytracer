@@ -16,7 +16,7 @@ BinPackParameters: false
 
 IndentCaseLabels: false
 Cpp11BracedListStyle: false
-
+		      
 MaxEmptyLinesToKeep: 2
 AlignTrailingComments: true
 SpacesBeforeTrailingComments: 2
