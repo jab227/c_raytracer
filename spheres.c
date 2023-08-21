@@ -1,40 +1,71 @@
-#include <math.h>
-
-#include "ray.h"
 #include "spheres.h"
+#include "ray.h"
 #include "vec3.h"
 
-static HitResult hit_sphere(Vec3 center, double radius, Ray r,
-                            HitValidInterval interval) {
-  Vec3 oc = vec3_sub(r.origin, center);
-  double a = vec3_norm_squared(r.direction);
-  double half_b = vec3_dot(oc, r.direction);
-  double c = vec3_norm_squared(oc) - radius * radius;
+#include <assert.h>
+#include <math.h>
+#include <stddef.h>
 
-  double discriminant = half_b * half_b - a * c;
+Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r,
+                 HitInfo *front_facing, size_t n_front_facing,
+                 HitInfo *non_front_facing, size_t n_non_front_facing,
+                 HitValidInterval interval) {
 
-  if (discriminant < 0) {
-    return (HitResult){.is_hit = false};
-  }
-  double sqrt_discriminant = sqrt(discriminant);
-  double root = (-half_b - sqrt_discriminant) / a;
+  assert(s != NULL);
+  assert(front_facing != NULL);
+  assert(non_front_facing != NULL);
 
-  if (root <= interval.tmin || root >= interval.tmax) {
-    root = (-half_b + sqrt_discriminant) / a;
-    if (root <= interval.tmin || root >= interval.tmax) {
-      return (HitResult){.is_hit = false};
+  size_t front_facing_idx = 0;
+  size_t non_front_facing_idx = 0;
+  bool hit_anything = false;
+  double closest = interval.tmax;
+  Vec3 last_normal = {0};
+
+  for (size_t i = 0; i < n_spheres; ++i) {
+    double radius = s->radiuses[i];
+    Vec3 center = s->centers[i];
+
+    Vec3 oc = vec3_sub(r.origin, center);
+    double a = vec3_norm_squared(r.direction);
+    double half_b = vec3_dot(oc, r.direction);
+    double c = vec3_norm_squared(oc) - radius * radius;
+
+    double discriminant = half_b * half_b - a * c;
+
+    if (discriminant < 0) {
+      continue;
+    }
+    double sqrt_discriminant = sqrt(discriminant);
+    double root = (-half_b - sqrt_discriminant) / a;
+
+    if (root <= interval.tmin || root >= closest) {
+      root = (-half_b + sqrt_discriminant) / a;
+      if (root <= interval.tmin || root >= closest) {
+        continue;
+      }
+    }
+
+    hit_anything = true;
+    Vec3 hit_point = ray_at(r, root);
+    Vec3 outward_normal = vec3_div(vec3_sub(hit_point, center), radius);
+
+    if (vec3_dot(r.direction, outward_normal) < 0.0) {
+      assert(front_facing_idx < n_front_facing);
+      last_normal = outward_normal;
+      front_facing[front_facing_idx] =
+          (HitInfo){.normal = outward_normal, .point = hit_point, .t = root};
+      ++front_facing_idx;
+    } else {
+      assert(non_front_facing_idx < n_non_front_facing);
+      last_normal = vec3_neg(outward_normal);
+      non_front_facing[non_front_facing_idx] = (HitInfo){
+          .normal = vec3_neg(outward_normal), .point = hit_point, .t = root};
+      ++n_non_front_facing;
     }
   }
 
-  Vec3 hit_point = ray_at(r, root);
-  HitResult res = {
-      .is_hit = true,
-      .info = {.t = root,
-               .point = hit_point,
-               .normal = vec3_div(vec3_sub(hit_point, center), radius)}};
-
-  return res;
+  return (Hits){.front_facing_hits = front_facing_idx,
+                .non_front_facing_hits = non_front_facing_idx,
+                .hit_anything = hit_anything,
+                .normal = last_normal};
 }
-
-
-

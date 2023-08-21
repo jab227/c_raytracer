@@ -1,3 +1,9 @@
+#include "camera.h"
+#include "color.h"
+#include "ray.h"
+#include "spheres.h"
+#include "vec3.h"
+
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
@@ -5,39 +11,23 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "camera.h"
-#include "color.h"
-#include "ray.h"
-#include "vec3.h"
-
 #define ASPECT_RATIO(width, height) ((double)width / (double)height)
+#define MAX_HITS 10
+Color ray_color(Ray r, const Spheres *s, size_t n_spheres) {
+  HitInfo front_facing[MAX_HITS] = {0};
+  HitInfo non_front_facing[MAX_HITS] = {0};
+  HitValidInterval interval = {.tmin = 0.0, .tmax = INFINITY};
 
-double hit_sphere(Vec3 center, double radius, Ray r) {
-  Vec3 oc = vec3_sub(r.origin, center);
-  double a = vec3_norm_squared(r.direction);
-  double half_b = vec3_dot(oc, r.direction);
-  double c = vec3_norm_squared(oc) - radius * radius;
-
-  double discriminant = half_b * half_b - a * c;
-
-  if (discriminant < 0) {
-    return -1.0;
-  } else {
-    return (-half_b - sqrt(discriminant)) / a;
+  Hits h = hit_spheres(s, n_spheres, r, front_facing, MAX_HITS,
+                       non_front_facing, MAX_HITS, interval);
+  if (h.hit_anything) {
+    return (Color){
+        .r = 0.5 * (h.normal.x + 1),
+        .g = 0.5 * (h.normal.y + 1),
+        .b = 0.5 * (h.normal.z + 1),
+    };
   }
-}
 
-Color ray_color(Ray r) {
-  Vec3 center = {.x = 0., .y = 0., .z = -1.};
-  double t = hit_sphere(center, 0.5, r);
-  if (t > 0.0) {
-    Vec3 hit_direction = ray_at(r, t);
-    Vec3 normal_vector = vec3_sub(hit_direction, center);
-    Vec3 unit_normal_vector = vec3_normalize(normal_vector);
-    return (Color){.r = 0.5 * (unit_normal_vector.x + 1.0),
-                   .g = 0.5 * (unit_normal_vector.y + 1.0),
-                   .b = 0.5 * (unit_normal_vector.z + 1.0)};
-  }
   Vec3 unit_direction = vec3_normalize(r.direction);
   double a = 0.5 * (unit_direction.y + 1.0);
   return (Color){.r = (1.0 - a) + (a * 0.5),
@@ -69,6 +59,13 @@ int main(void) {
   Vec3 viewport_upper_left = camera_compute_viewport_upper_left(c);
   Vec3 pixel00_loc = compute_pixel_00_location(viewport_upper_left, dudv);
 
+  // What
+  Spheres s = {
+      .centers = {{.x = 0.0, .y = -100.5, .z = -1.0},
+                  {.x = 0.0, .y = 0.0, .z = -1.0}},
+      .radiuses = {100.0, 0.5},
+  };
+
   printf("P3\n%zu %zu\n255\n", image_width, image_height);
   for (size_t j = 0; j < image_height; ++j) {
     for (size_t i = 0; i < image_width; ++i) {
@@ -76,7 +73,7 @@ int main(void) {
       Vec3 pixel_center = compute_pixel_center(pixel00_loc, dudv, pos);
       Vec3 ray_direction = vec3_sub(pixel_center, c.center);
       Ray r = {.direction = ray_direction, .origin = c.center};
-      Color pixel = ray_color(r);
+      Color pixel = ray_color(r, &s, N_SPHERES);
       color_write(stdout, pixel);
     }
   }

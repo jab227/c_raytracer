@@ -7,7 +7,7 @@ all: main
 
 main: $(objects)
 
-main.o: main.c color.o
+main.o: main.c color.o spheres.o camera.o vec3.o ray.o
 
 ray.o: ray.c ray.h vec3.o
 
