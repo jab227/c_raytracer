@@ -1,7 +1,7 @@
 CFLAGS=-Wall -Wextra -Wconversion -Wpedantic -Werror -std=c11 -ggdb3 -O2
 LDLIBS=-lm
 
-objects = main.o vec3.o color.o ray.o camera.o
+objects = main.o vec3.o color.o ray.o camera.o spheres.o
 
 all: main
 
@@ -16,6 +16,8 @@ camera.o: camera.c camera.h vec3.o
 vec3.o: vec3.c vec3.h
 
 color.o: color.c color.h
+
+spheres.o: spheres.c spheres.h ray.o vec3.o
 
 .PHONY: clean 
 
