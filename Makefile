@@ -1,23 +1,23 @@
 CFLAGS=-Wall -Wextra -Wconversion -Wpedantic -Werror -std=c11 -ggdb3 -O2
 LDLIBS=-lm
 
-objects = main.o vec3.o color.o ray.o camera.o spheres.o
+objects = src/main.o src/vec3.o src/color.o src/ray.o src/camera.o src/spheres.o
 
-all: main
+all: src/main
 
-main: $(objects)
+src/main: $(objects)
 
-main.o: main.c color.o spheres.o camera.o vec3.o ray.o
+src/main.o: src/main.c src/camera.h
 
-ray.o: ray.c ray.h vec3.o
+src/ray.o: src/ray.c src/ray.h src/vec3.h
 
-camera.o: camera.c camera.h vec3.o
+src/camera.o: src/camera.c src/camera.h src/vec3.h src/ray.h src/color.h src/spheres.h
 
-vec3.o: vec3.c vec3.h
+src/vec3.o: src/vec3.c src/vec3.h
 
-color.o: color.c color.h
+src/color.o: src/color.c src/color.h
 
-spheres.o: spheres.c spheres.h ray.o vec3.o
+src/spheres.o: src/spheres.c src/spheres.h src/ray.h src/vec3.h
 
 .PHONY: clean 
 
