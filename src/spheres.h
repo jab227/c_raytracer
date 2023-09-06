@@ -27,6 +27,8 @@ typedef struct {
 #define INTERVAL_CONTAINS(interval, x) (interval.tmin <= x && x <= interval.tmax)
 #define INTERVAL_SURROUNDS(interval, x) (interval.tmin < x && x < interval.tmax)
 
+double interval_clamp(Interval i, double x);
+
 typedef struct {
   Vec3 normal;
   size_t front_facing_hits;
@@ -38,5 +40,6 @@ Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r,
                  HitInfo *front_facing, size_t n_front_facing,
                  HitInfo *non_front_facing, size_t n_non_front_facing,
                  Interval interval);
+
 
 #endif

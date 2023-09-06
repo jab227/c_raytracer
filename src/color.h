@@ -9,5 +9,5 @@ typedef struct {
     double b;
 } Color;
 
-void color_write(FILE *f, Color pixel);
+void color_write(FILE *f, Color pixel, size_t samples_per_pixel);
 #endif

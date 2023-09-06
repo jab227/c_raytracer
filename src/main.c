@@ -20,18 +20,19 @@ int main(void) {
   // Camera settings
   CameraSystem c = {
       .focal_length = 1.0,
+      .samples_per_pixel = 100,
       .center = {.x = 0.0, .y = 0.0, .z = 0.0},
       .viewport = {.size = {.height = viewport_height, .width = viewport_width},
                    .uv = {.u = {.x = viewport_width, .y = 0.0, .z = 0.0},
                           .v = {.x = 0.0, .y = -viewport_height, .z = 0.0}}}};
 
   // What
-  Spheres s = {
+  Spheres world = {
       .centers = {{.x = 0.0, .y = -100.5, .z = -1.0},
                   {.x = 0.0, .y = 0.0, .z = -1.0}},
       .radiuses = {100.0, 0.5},
   };
 
-  render(&c, size, &s, 2);
+  render(&c, size, &world, 2);
   return 0;
 }

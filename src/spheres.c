@@ -68,3 +68,14 @@ Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r,
                 .hit_anything = hit_anything,
                 .normal = last_normal};
 }
+
+double interval_clamp(Interval i, double x) {
+  if (x < i.tmin) {
+    return i.tmin;
+  }
+  if (x > i.tmax) {
+    return i.tmax;
+  }
+
+  return x;
+}
