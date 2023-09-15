@@ -1,5 +1,5 @@
 #include "color.h"
-#include "spheres.h"
+#include "interval.h"
 #include <stdint.h>
 #include <stdio.h>
 

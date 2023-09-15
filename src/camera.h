@@ -46,7 +46,7 @@ typedef struct {
 } ImagePos;
 
 Color ray_color(Ray r, const Spheres *s, size_t n_spheres);
-void render(const CameraSystem *cs, ImageSize s, Spheres *world,
+void render(const CameraSystem *cs, ImageSize s, const Spheres *world,
             size_t world_size);
 
 #endif

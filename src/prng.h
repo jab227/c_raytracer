@@ -1,6 +1,7 @@
 #ifndef PRNG_H_
 #define PRNG_H_
 
+#include <assert.h>
 double randomd();
 double randomd_in(double min, double max);
 
@@ -19,6 +20,7 @@ typedef struct {
 } PCG32Random;
 
 static uint32_t pcg32_random_r(PCG32Random *rng) {
+  assert(rng != NULL);
   uint64_t oldstate = rng->state;
   rng->state = oldstate * MAGIC_VALUE + (rng->inc | 1);
 
@@ -30,6 +32,7 @@ static uint32_t pcg32_random_r(PCG32Random *rng) {
 
 static void pcg32_srandom(PCG32Random *rng, uint64_t init_state,
                           uint64_t initseq) {
+  assert(rng != NULL);
   rng->state = 0U;
   rng->inc = (initseq << 1u) | 1;
   pcg32_random_r(rng);

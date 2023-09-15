@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "color.h"
+#include "interval.h"
 #include "ray.h"
 #include "spheres.h"
 #include "vec3.h"
@@ -47,15 +48,10 @@ static Vec3 compute_pixel_center(Vec3 pixel_00_loc, PixelDeltas dudv,
   return vec3_add(pixel_00_loc, vec3_add(a, b));
 }
 
-#define MAX_HITS 10
-
 Color ray_color(Ray r, const Spheres *s, size_t n_spheres) {
-  HitInfo front_facing[MAX_HITS] = {0};
-  HitInfo non_front_facing[MAX_HITS] = {0};
   Interval interval = {.tmin = 0.0, .tmax = INFINITY};
 
-  Hits h = hit_spheres(s, n_spheres, r, front_facing, MAX_HITS,
-                       non_front_facing, MAX_HITS, interval);
+  Hits h = hit_spheres(s, n_spheres, r, interval);
   if (h.hit_anything) {
     return (Color){
         .r = 0.5 * (h.normal.x + 1),
@@ -91,7 +87,8 @@ static Ray get_ray(const CameraSystem *cs, ImagePos pos, ImageSize s) {
 
   return r;
 }
-void render(const CameraSystem *cs, ImageSize s, Spheres *world,
+
+void render(const CameraSystem *cs, ImageSize s, const Spheres *world,
             size_t world_size) {
   printf("P3\n%zu %zu\n255\n", s.width, s.height);
   for (size_t j = 0; j < s.height; ++j) {

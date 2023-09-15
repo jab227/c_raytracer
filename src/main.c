@@ -18,7 +18,7 @@ int main(void) {
   double viewport_width = viewport_height * real_ratio;
 
   // Camera settings
-  CameraSystem c = {
+  CameraSystem cs = {
       .focal_length = 1.0,
       .samples_per_pixel = 100,
       .center = {.x = 0.0, .y = 0.0, .z = 0.0},
@@ -32,7 +32,6 @@ int main(void) {
                   {.x = 0.0, .y = 0.0, .z = -1.0}},
       .radiuses = {100.0, 0.5},
   };
-
-  render(&c, size, &world, 2);
+  render(&cs, size, &world, 2);
   return 0;
 }

@@ -1,4 +1,5 @@
 #include "spheres.h"
+#include "interval.h"
 #include "ray.h"
 #include "vec3.h"
 
@@ -6,17 +7,9 @@
 #include <math.h>
 #include <stddef.h>
 
-Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r,
-                 HitInfo *front_facing, size_t n_front_facing,
-                 HitInfo *non_front_facing, size_t n_non_front_facing,
-                 Interval interval) {
+Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval) {
 
   assert(s != NULL);
-  assert(front_facing != NULL);
-  assert(non_front_facing != NULL);
-
-  size_t front_facing_idx = 0;
-  size_t non_front_facing_idx = 0;
   bool hit_anything = false;
   Vec3 last_normal = {0};
 
@@ -49,33 +42,11 @@ Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r,
     Vec3 outward_normal = vec3_div(vec3_sub(hit_point, center), radius);
 
     if (vec3_dot(r.direction, outward_normal) < 0.0) {
-      assert(front_facing_idx < n_front_facing);
       last_normal = outward_normal;
-      front_facing[front_facing_idx] =
-          (HitInfo){.normal = outward_normal, .point = hit_point, .t = root};
-      ++front_facing_idx;
     } else {
-      assert(non_front_facing_idx < n_non_front_facing);
       last_normal = vec3_neg(outward_normal);
-      non_front_facing[non_front_facing_idx] = (HitInfo){
-          .normal = vec3_neg(outward_normal), .point = hit_point, .t = root};
-      ++n_non_front_facing;
     }
   }
 
-  return (Hits){.front_facing_hits = front_facing_idx,
-                .non_front_facing_hits = non_front_facing_idx,
-                .hit_anything = hit_anything,
-                .normal = last_normal};
-}
-
-double interval_clamp(Interval i, double x) {
-  if (x < i.tmin) {
-    return i.tmin;
-  }
-  if (x > i.tmax) {
-    return i.tmax;
-  }
-
-  return x;
+  return (Hits){.hit_anything = hit_anything, .normal = last_normal};
 }
