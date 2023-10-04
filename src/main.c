@@ -5,7 +5,8 @@
 
 #define ASPECT_RATIO(width, height) ((double) width / (double) height)
 
-int main(void)
+int
+main(void)
 {
     const double aspect_ratio = 16.0 / 9.0;
     const size_t image_width = 400;

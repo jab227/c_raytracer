@@ -1,23 +1,10 @@
+BasedOnStyle: Mozilla
 UseTab: Never
 TabWidth: 4
 IndentWidth: 4
-ContinuationIndentWidth: 2
+ContinuationIndentWidth: 4
 Language: Cpp
-BreakBeforeBraces: Custom
-BraceWrapping:
-  AfterClass:      true
-  AfterControlStatement: true
-  AfterEnum:       true
-  AfterExternBlock: true
-  AfterFunction:   true
-  AfterNamespace:  true
-  AfterObjCDeclaration: true
-  AfterStruct:     true
-  AfterUnion:      true
-  BeforeCatch:     true
-  BeforeElse:      true
-  IndentBraces:    false
-ColumnLimit: 99
+ColumnLimit: 80
 SortIncludes: true
 PointerAlignment: Right
 DerivePointerAlignment: false
