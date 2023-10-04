@@ -24,9 +24,7 @@ Vec3 vec3_div(Vec3 v, double divisor)
 
 Vec3 vec3_mul(Vec3 v, double multiplier)
 {
-    return (Vec3){ .x = v.x * multiplier,
-                   .y = v.y * multiplier,
-                   .z = v.z * multiplier };
+    return (Vec3){ .x = v.x * multiplier, .y = v.y * multiplier, .z = v.z * multiplier };
 }
 
 Vec3 vec3_cross(Vec3 lhs, Vec3 rhs)
@@ -38,10 +36,7 @@ Vec3 vec3_cross(Vec3 lhs, Vec3 rhs)
     };
 }
 
-double vec3_dot(Vec3 lhs, Vec3 rhs)
-{
-    return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
-}
+double vec3_dot(Vec3 lhs, Vec3 rhs) { return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z; }
 
 double vec3_norm_squared(Vec3 v) { return vec3_dot(v, v); }
 

@@ -4,6 +4,7 @@
 #include "ray.h"
 #include "spheres.h"
 #include "vec3.h"
+#include <stdint.h>
 
 #define PRNG_IMPL
 #include "prng.h"
@@ -48,25 +49,6 @@ static Vec3 compute_pixel_center(Vec3 pixel_00_loc, PixelDeltas dudv,
   return vec3_add(pixel_00_loc, vec3_add(a, b));
 }
 
-Color ray_color(Ray r, const Spheres *s, size_t n_spheres) {
-  Interval interval = {.tmin = 0.0, .tmax = INFINITY};
-
-  Hits h = hit_spheres(s, n_spheres, r, interval);
-  if (h.hit_anything) {
-    return (Color){
-        .r = 0.5 * (h.normal.x + 1),
-        .g = 0.5 * (h.normal.y + 1),
-        .b = 0.5 * (h.normal.z + 1),
-    };
-  }
-
-  Vec3 unit_direction = vec3_normalize(r.direction);
-  double a = 0.5 * (unit_direction.y + 1.0);
-  return (Color){.r = (1.0 - a) + (a * 0.5),
-                 .g = (1.0 - a) + (a * 0.7),
-                 .b = (1.0 - a) + (a * 1.0)};
-}
-
 static Vec3 pixel_sample_square(PixelDeltas dudv) {
   double px = -0.5 + randomd();
   double py = -0.5 + randomd();
@@ -88,6 +70,66 @@ static Ray get_ray(const CameraSystem *cs, ImagePos pos, ImageSize s) {
   return r;
 }
 
+// Unused for now
+/* static Vec3 vec3_random() { */
+/*   return (Vec3){.x = randomd(), .y = randomd(), .z = randomd()}; */
+/* } */
+
+static Vec3 vec3_random_in(double min, double max) {
+  return (Vec3){.x = randomd_in(min, max),
+                .y = randomd_in(min, max),
+                .z = randomd_in(min, max)};
+}
+
+static Vec3 vec3_random_in_unit_sphere() {
+  for (;;) {
+    Vec3 v = vec3_random_in(-1.0, 1.0);
+    if (vec3_norm_squared(v) < 1.0) {
+      return v;
+    }
+  }
+}
+
+static Vec3 vec3_random_unit_vec_in_unit_sphere() {
+  return vec3_normalize(vec3_random_in_unit_sphere());
+}
+
+static Vec3 vec3_random_on_hemisphere(Vec3 normal) {
+  Vec3 v = vec3_random_unit_vec_in_unit_sphere();
+  if (vec3_dot(v, normal) > 0.0) {
+    return v;
+  } else {
+    return vec3_neg(v);
+  }
+}
+
+Color ray_color(Ray r, const Spheres *s, size_t n_spheres, int32_t depth) {
+  // NOTE(juan): Fix shadow acne -> tmin from 0.0 to 0.001
+  Interval interval = {.tmin = 0.001, .tmax = INFINITY};
+
+  Hits h = hit_spheres(s, n_spheres, r, interval);
+  if (depth <= 0) {
+    return (Color){0};
+  }
+
+  if (h.hit_anything) {
+    Vec3 direction = vec3_random_on_hemisphere(h.normal);
+    Ray next = {.direction = direction, .origin = h.point};
+    Color c = ray_color(next, s, n_spheres, depth - 1);
+    return (Color){
+        .r = 0.5 * c.r,
+        .g = 0.5 * c.g,
+        .b = 0.5 * c.b,
+    };
+  }
+
+  Vec3 unit_direction = vec3_normalize(r.direction);
+  double a = 0.5 * (unit_direction.y + 1.0);
+  return (Color){.r = (1.0 - a) + (a * 0.5),
+                 .g = (1.0 - a) + (a * 0.7),
+                 .b = (1.0 - a) + (a * 1.0)};
+}
+
 void render(const CameraSystem *cs, ImageSize s, const Spheres *world,
             size_t world_size) {
   printf("P3\n%zu %zu\n255\n", s.width, s.height);
@@ -97,7 +139,7 @@ void render(const CameraSystem *cs, ImageSize s, const Spheres *world,
       ImagePos pos = {.col = i, .row = j};
       for (size_t sample = 0; sample < cs->samples_per_pixel; ++sample) {
         Ray r = get_ray(cs, pos, s);
-        Color new_color = ray_color(r, world, world_size);
+        Color new_color = ray_color(r, world, world_size, cs->max_depth);
         pixel = (Color){
             .r = pixel.r + new_color.r,
             .g = pixel.g + new_color.g,

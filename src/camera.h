@@ -7,6 +7,7 @@
 #include "vec3.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
   double height;
@@ -33,6 +34,7 @@ typedef struct {
   Vec3 center;
   size_t samples_per_pixel;
   double focal_length;
+  int32_t max_depth;
 } CameraSystem;
 
 typedef struct {
@@ -45,7 +47,7 @@ typedef struct {
   size_t col;
 } ImagePos;
 
-Color ray_color(Ray r, const Spheres *s, size_t n_spheres);
+Color ray_color(Ray r, const Spheres *s, size_t n_spheres, int32_t depth);
 void render(const CameraSystem *cs, ImageSize s, const Spheres *world,
             size_t world_size);
 

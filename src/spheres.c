@@ -7,46 +7,54 @@
 #include <math.h>
 #include <stddef.h>
 
-Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval) {
+Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval)
+{
+    assert(s != NULL);
+    bool hit_anything = false;
+    Vec3 last_normal = { 0 };
+    Vec3 hit_point = { 0 };
 
-  assert(s != NULL);
-  bool hit_anything = false;
-  Vec3 last_normal = {0};
+    for (size_t i = 0; i < n_spheres; ++i)
+    {
+        double radius = s->radiuses[i];
+        Vec3 center = s->centers[i];
 
-  for (size_t i = 0; i < n_spheres; ++i) {
-    double radius = s->radiuses[i];
-    Vec3 center = s->centers[i];
+        Vec3 oc = vec3_sub(r.origin, center);
+        double a = vec3_norm_squared(r.direction);
+        double half_b = vec3_dot(oc, r.direction);
+        double c = vec3_norm_squared(oc) - radius * radius;
 
-    Vec3 oc = vec3_sub(r.origin, center);
-    double a = vec3_norm_squared(r.direction);
-    double half_b = vec3_dot(oc, r.direction);
-    double c = vec3_norm_squared(oc) - radius * radius;
+        double discriminant = half_b * half_b - a * c;
 
-    double discriminant = half_b * half_b - a * c;
+        if (discriminant < 0)
+        {
+            continue;
+        }
+        double sqrt_discriminant = sqrt(discriminant);
+        double root = (-half_b - sqrt_discriminant) / a;
 
-    if (discriminant < 0) {
-      continue;
+        if (!INTERVAL_SURROUNDS(interval, root))
+        {
+            root = (-half_b + sqrt_discriminant) / a;
+            if (!INTERVAL_SURROUNDS(interval, root))
+            {
+                continue;
+            }
+        }
+
+        hit_anything = true;
+        hit_point = ray_at(r, root);
+        Vec3 outward_normal = vec3_div(vec3_sub(hit_point, center), radius);
+
+        if (vec3_dot(r.direction, outward_normal) < 0.0)
+        {
+            last_normal = outward_normal;
+        }
+        else
+        {
+            last_normal = vec3_neg(outward_normal);
+        }
     }
-    double sqrt_discriminant = sqrt(discriminant);
-    double root = (-half_b - sqrt_discriminant) / a;
 
-    if (!INTERVAL_SURROUNDS(interval, root)) {
-      root = (-half_b + sqrt_discriminant) / a;
-      if (!INTERVAL_SURROUNDS(interval, root)) {
-        continue;
-      }
-    }
-
-    hit_anything = true;
-    Vec3 hit_point = ray_at(r, root);
-    Vec3 outward_normal = vec3_div(vec3_sub(hit_point, center), radius);
-
-    if (vec3_dot(r.direction, outward_normal) < 0.0) {
-      last_normal = outward_normal;
-    } else {
-      last_normal = vec3_neg(outward_normal);
-    }
-  }
-
-  return (Hits){.hit_anything = hit_anything, .normal = last_normal};
+    return (Hits){ .hit_anything = hit_anything, .normal = last_normal, .point = hit_point };
 }

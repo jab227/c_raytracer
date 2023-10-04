@@ -1,8 +1,8 @@
 #ifndef SPHERES_H_
 #define SPHERES_H_
+#include "interval.h"
 #include "ray.h"
 #include "vec3.h"
-#include "interval.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -14,9 +14,9 @@ typedef struct {
   double radiuses[N_SPHERES];
 } Spheres;
 
-
 typedef struct {
   Vec3 normal;
+  Vec3 point;
   bool hit_anything;
 } Hits;
 

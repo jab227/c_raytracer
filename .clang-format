@@ -1,31 +1,38 @@
-BasedOnStyle: LLVM
+UseTab: Never
+TabWidth: 4
 IndentWidth: 4
-ContinuationIndentWidth: 4
-
-ColumnLimit: 80
+ContinuationIndentWidth: 2
+Language: Cpp
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass:      true
+  AfterControlStatement: true
+  AfterEnum:       true
+  AfterExternBlock: true
+  AfterFunction:   true
+  AfterNamespace:  true
+  AfterObjCDeclaration: true
+  AfterStruct:     true
+  AfterUnion:      true
+  BeforeCatch:     true
+  BeforeElse:      true
+  IndentBraces:    false
+ColumnLimit: 99
 SortIncludes: true
-BreakBeforeBraces: Linux
-
 PointerAlignment: Right
 DerivePointerAlignment: false
 SpaceAfterCStyleCast: true
 SpacesInCStyleCastParentheses: false
-
 BinPackArguments: false
 BinPackParameters: false
-
 IndentCaseLabels: false
 Cpp11BracedListStyle: false
-		      
 MaxEmptyLinesToKeep: 2
 AlignTrailingComments: true
 SpacesBeforeTrailingComments: 2
-
 KeepEmptyLinesAtTheStartOfBlocks: false
 AllowShortIfStatementsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
-
 PenaltyExcessCharacter: 7
 PenaltyBreakBeforeFirstCallParameter: 50
-
 AlignArrayOfStructures: Left
