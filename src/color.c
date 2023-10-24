@@ -25,6 +25,7 @@ color_scale(Color c, double scale)
         .b = c.b * scale,
     };
 }
+
 void
 color_write(FILE *f, Color pixel, size_t samples_per_pixel)
 {

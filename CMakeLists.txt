@@ -22,7 +22,7 @@ target_link_libraries(vec3 PRIVATE m)
 add_library(interval STATIC src/interval.c src/interval.h)
 
 add_library(color STATIC src/color.c src/color.h)
-target_link_libraries(color PRIVATE interval)
+target_link_libraries(color PRIVATE interval m)
 
 add_library(ray STATIC src/ray.c src/ray.h)
 target_link_libraries(ray PRIVATE vec3)
