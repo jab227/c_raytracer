@@ -120,6 +120,7 @@ vec3_random_on_hemisphere(Vec3 normal)
     }
 }
 
+// TODO(juan): Convert to iterative
 Color
 ray_color(Ray r, const Spheres *s, size_t n_spheres, int32_t depth)
 {
@@ -132,13 +133,17 @@ ray_color(Ray r, const Spheres *s, size_t n_spheres, int32_t depth)
     }
 
     if (h.hit_anything) {
-        Vec3 direction = vec3_random_on_hemisphere(h.normal);
+        // If we don't substract the normal, we are using the
+        // uniform distribution, else we use lambertian
+        Vec3 direction = vec3_add(vec3_random_on_hemisphere(h.normal), h.normal);
         Ray next = { .direction = direction, .origin = h.point };
+
         Color c = ray_color(next, s, n_spheres, depth - 1);
+        double reflectance = 0.55;
         return (Color){
-            .r = 0.5 * c.r,
-            .g = 0.5 * c.g,
-            .b = 0.5 * c.b,
+            .r = reflectance * c.r,
+            .g = reflectance * c.g,
+            .b = reflectance * c.b,
         };
     }
 

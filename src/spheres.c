@@ -7,15 +7,15 @@
 #include <math.h>
 #include <stddef.h>
 
-Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval)
+Hits
+hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval)
 {
     assert(s != NULL);
     bool hit_anything = false;
     Vec3 last_normal = { 0 };
     Vec3 hit_point = { 0 };
 
-    for (size_t i = 0; i < n_spheres; ++i)
-    {
+    for (size_t i = 0; i < n_spheres; ++i) {
         double radius = s->radiuses[i];
         Vec3 center = s->centers[i];
 
@@ -26,18 +26,15 @@ Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval)
 
         double discriminant = half_b * half_b - a * c;
 
-        if (discriminant < 0)
-        {
+        if (discriminant < 0) {
             continue;
         }
         double sqrt_discriminant = sqrt(discriminant);
         double root = (-half_b - sqrt_discriminant) / a;
 
-        if (!INTERVAL_SURROUNDS(interval, root))
-        {
+        if (!INTERVAL_SURROUNDS(interval, root)) {
             root = (-half_b + sqrt_discriminant) / a;
-            if (!INTERVAL_SURROUNDS(interval, root))
-            {
+            if (!INTERVAL_SURROUNDS(interval, root)) {
                 continue;
             }
         }
@@ -46,15 +43,16 @@ Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval)
         hit_point = ray_at(r, root);
         Vec3 outward_normal = vec3_div(vec3_sub(hit_point, center), radius);
 
-        if (vec3_dot(r.direction, outward_normal) < 0.0)
-        {
+        if (vec3_dot(r.direction, outward_normal) < 0.0) {
             last_normal = outward_normal;
-        }
-        else
-        {
+        } else {
             last_normal = vec3_neg(outward_normal);
         }
     }
 
-    return (Hits){ .hit_anything = hit_anything, .normal = last_normal, .point = hit_point };
+    return (Hits){
+        .hit_anything = hit_anything,
+        .normal = last_normal,
+        .point = hit_point,
+    };
 }

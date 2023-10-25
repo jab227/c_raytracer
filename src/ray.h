@@ -2,7 +2,8 @@
 #define RAY_H_
 
 #include "vec3.h"
-typedef struct {
+typedef struct
+{
     Vec3 origin;
     Vec3 direction;
 } Ray;

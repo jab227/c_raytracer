@@ -20,7 +20,8 @@ typedef struct
     uint64_t inc;
 } PCG32Random;
 
-static uint32_t pcg32_random_r(PCG32Random *rng)
+static uint32_t
+pcg32_random_r(PCG32Random *rng)
 {
     assert(rng != NULL);
     uint64_t oldstate = rng->state;
@@ -32,7 +33,8 @@ static uint32_t pcg32_random_r(PCG32Random *rng)
     return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
 }
 
-static void pcg32_srandom(PCG32Random *rng, uint64_t init_state, uint64_t initseq)
+static void
+pcg32_srandom(PCG32Random *rng, uint64_t init_state, uint64_t initseq)
 {
     assert(rng != NULL);
     rng->state = 0U;
@@ -42,19 +44,23 @@ static void pcg32_srandom(PCG32Random *rng, uint64_t init_state, uint64_t initse
     pcg32_random_r(rng);
 }
 
-double randomd()
+double
+randomd()
 {
     static int initialized = 0;
     static PCG32Random rng = { 0 };
-    if (!initialized)
-    {
+    if (!initialized) {
         pcg32_srandom(&rng, (uint64_t) time(NULL), (uint64_t) &rng);
         initialized = 1;
     }
     return ldexp(pcg32_random_r(&rng), -32);
 }
 
-double randomd_in(double min, double max) { return min + (max - min) * randomd(); }
+double
+randomd_in(double min, double max)
+{
+    return min + (max - min) * randomd();
+}
 
 #endif
 #endif

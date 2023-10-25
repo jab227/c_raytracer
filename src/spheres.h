@@ -9,15 +9,17 @@
 
 #define N_SPHERES 2
 
-typedef struct {
-  Vec3 centers[N_SPHERES];
-  double radiuses[N_SPHERES];
+typedef struct
+{
+    Vec3 centers[N_SPHERES];
+    double radiuses[N_SPHERES];
 } Spheres;
 
-typedef struct {
-  Vec3 normal;
-  Vec3 point;
-  bool hit_anything;
+typedef struct
+{
+    Vec3 normal;
+    Vec3 point;
+    bool hit_anything;
 } Hits;
 
 Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval);

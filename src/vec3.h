@@ -1,7 +1,8 @@
 #ifndef VEC3_H_
 #define VEC3_H_
 
-typedef struct {
+typedef struct
+{
     double x;
     double y;
     double z;
