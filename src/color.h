@@ -11,4 +11,7 @@ typedef struct
 } Color;
 
 void color_write(FILE *f, Color pixel, size_t samples_per_pixel);
+Color color_lerp(Color c, double a);
+Color color_scale(Color c, double scale);
+
 #endif

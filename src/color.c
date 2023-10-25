@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define CLAMP_VAL 255.999
+#define CLAMP 255.999
 
 /* almost all computer programs assume that an image is “gamma *
  corrected” before being written into an image file. This means that *
@@ -17,23 +17,46 @@
  need to go from linear space to gamma space, which means taking the
  inverse of “gamma 2", which means an exponent of 1/gamma, which is
  just the square-root. */
-static double
-color_linear_to_gamma(double linear_component)
+static Color
+color_linear_to_gamma(Color linear_color)
 {
-    return sqrt(linear_component);
+    return (Color){
+        sqrt(linear_color.r),
+        sqrt(linear_color.g),
+        sqrt(linear_color.b),
+    };
+}
+
+Color
+color_scale(Color c, double scale)
+{
+    return (Color){
+        .r = c.r * scale,
+        .g = c.g * scale,
+        .b = c.b * scale,
+    };
 }
 
 void
 color_write(FILE *f, Color pixel, size_t samples_per_pixel)
 {
     double scale = 1.0 / (double) samples_per_pixel;
-    // Refactor
-    double gamma_r = color_linear_to_gamma(pixel.r * scale);
-    double gamma_g = color_linear_to_gamma(pixel.g * scale);
-    double gamma_b = color_linear_to_gamma(pixel.b * scale);
+
+    Color scaled_pixel = color_scale(pixel, scale);
+    Color gamma_pixel = color_linear_to_gamma(scaled_pixel);
+
     static const Interval intensity = { .tmin = 0.000, .tmax = 0.999 };
-    uint8_t r = (uint8_t) (CLAMP_VAL * interval_clamp(intensity, gamma_r));
-    uint8_t g = (uint8_t) (CLAMP_VAL * interval_clamp(intensity, gamma_g));
-    uint8_t b = (uint8_t) (CLAMP_VAL * interval_clamp(intensity, gamma_b));
+    uint8_t r = (uint8_t) (CLAMP * interval_clamp(intensity, gamma_pixel.r));
+    uint8_t g = (uint8_t) (CLAMP * interval_clamp(intensity, gamma_pixel.g));
+    uint8_t b = (uint8_t) (CLAMP * interval_clamp(intensity, gamma_pixel.b));
+
     fprintf(f, "%d %d %d\n", r, g, b);
+}
+
+Color
+color_lerp(Color c, double a)
+{
+    return (Color){ .r = (1.0 - a) + (a * c.r),
+                    .g = (1.0 - a) + (a * c.g),
+                    .b = (1.0 - a) + (a * c.b) };
 }

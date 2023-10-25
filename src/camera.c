@@ -80,8 +80,14 @@ get_ray(const CameraSystem *cs, ImagePos pos, ImageSize s)
 }
 
 // Unused for now
-/* static Vec3 vec3_random() { */
-/*   return (Vec3){.x = randomd(), .y = randomd(), .z = randomd()}; */
+/* static Vec3 */
+/* vec3_random() */
+/* { */
+/*     return (Vec3){ */
+/*         .x = randomd(), */
+/*         .y = randomd(), */
+/*         .z = randomd(), */
+/*     }; */
 /* } */
 
 static Vec3
@@ -139,7 +145,7 @@ ray_color(Ray r, const Spheres *s, size_t n_spheres, int32_t depth)
         Ray next = { .direction = direction, .origin = h.point };
 
         Color c = ray_color(next, s, n_spheres, depth - 1);
-        double reflectance = 0.55;
+        const double reflectance = 0.5;
         return (Color){
             .r = reflectance * c.r,
             .g = reflectance * c.g,
@@ -149,9 +155,7 @@ ray_color(Ray r, const Spheres *s, size_t n_spheres, int32_t depth)
 
     Vec3 unit_direction = vec3_normalize(r.direction);
     double a = 0.5 * (unit_direction.y + 1.0);
-    return (Color){ .r = (1.0 - a) + (a * 0.5),
-                    .g = (1.0 - a) + (a * 0.7),
-                    .b = (1.0 - a) + (a * 1.0) };
+    return color_lerp((Color){ 0.5, 0.7, 1.0 }, a);
 }
 
 void
