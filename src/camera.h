@@ -19,11 +19,11 @@ typedef struct
 {
     Vec3 u;
     Vec3 v;
-} ViewportVectors;
+} ViewportUV;
 
 typedef struct
 {
-    ViewportVectors uv;
+    ViewportUV uv;
     ViewportSize size;
 } Viewport;
 

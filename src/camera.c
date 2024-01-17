@@ -13,7 +13,7 @@
 #include <stddef.h>
 
 static PixelDeltas
-compute_pixel_deltas_location(ViewportVectors uv, ImageSize size)
+compute_pixel_deltas_location(ViewportUV uv, ImageSize size)
 {
     double image_width = (double) size.width;
     double image_height = (double) size.height;
@@ -25,7 +25,7 @@ compute_pixel_deltas_location(ViewportVectors uv, ImageSize size)
 static Vec3
 camera_compute_viewport_upper_left(const CameraSystem *cs)
 {
-    ViewportVectors uv = cs->viewport.uv;
+    ViewportUV uv = cs->viewport.uv;
     // camera_center - vec3{0,0,focal_lenght} - viewport_u / 2 - viewport_v / 2
     Vec3 distance_from_center = { .x = 0.0, .y = 0.0, .z = cs->focal_length };
     Vec3 viewport_add = vec3_add(uv.u, uv.v);
@@ -145,7 +145,7 @@ ray_color(Ray r, const Spheres *s, size_t n_spheres, int32_t depth)
         Ray next = { .direction = direction, .origin = h.point };
 
         Color c = ray_color(next, s, n_spheres, depth - 1);
-        const double reflectance = 0.5;
+        const double reflectance = 0.8;
         return (Color){
             .r = reflectance * c.r,
             .g = reflectance * c.g,
