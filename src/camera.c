@@ -5,6 +5,8 @@
 #include "spheres.h"
 #include "vec3.h"
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define PRNG_IMPL
 #include "prng.h"
@@ -17,8 +19,10 @@ compute_pixel_deltas_location(ViewportUV uv, ImageSize size)
 {
     double image_width = (double) size.width;
     double image_height = (double) size.height;
-    PixelDeltas dudv = { .du = vec3_div(uv.u, image_width),
-                         .dv = vec3_div(uv.v, image_height) };
+    PixelDeltas dudv = {
+        .du = vec3_div(uv.u, image_width),
+        .dv = vec3_div(uv.v, image_height),
+    };
     return dudv;
 }
 
@@ -93,9 +97,11 @@ get_ray(const CameraSystem *cs, ImagePos pos, ImageSize s)
 static Vec3
 vec3_random_in(double min, double max)
 {
-    return (Vec3){ .x = randomd_in(min, max),
-                   .y = randomd_in(min, max),
-                   .z = randomd_in(min, max) };
+    return (Vec3){
+        .x = randomd_in(min, max),
+        .y = randomd_in(min, max),
+        .z = randomd_in(min, max),
+    };
 }
 
 static Vec3
@@ -126,40 +132,43 @@ vec3_random_on_hemisphere(Vec3 normal)
     }
 }
 
-// TODO(juan): Convert to iterative
+
 Color
-ray_color(Ray r, const Spheres *s, size_t n_spheres, int32_t depth)
+ray_color(Ray r, const Sphere *s, size_t n_spheres, int32_t depth)
 {
     // NOTE(juan): Fix shadow acne -> tmin from 0.0 to 0.001
     Interval interval = { .tmin = 0.001, .tmax = INFINITY };
-
-    Hits h = hit_spheres(s, n_spheres, r, interval);
-    if (depth <= 0) {
-        return (Color){ 0 };
+    const double reflectance = 0.5;
+    double attenuation = 1.0;
+    Ray next = r;
+    for (int32_t i = 0; i < depth; ++i) {
+        Hits record = hit_spheres(s, n_spheres, next, interval);
+        if (record.hit_anything) {
+            Vec3 dir = vec3_add(vec3_random_on_hemisphere(record.normal),
+                                record.normal);
+            // This was the important part when transforming the
+            // algorithm from recursive to iterative. The thing being
+            // modified was the reflectance
+            attenuation *= reflectance;
+            next = (Ray){ .direction = dir, .origin = record.point };
+        } else {
+            const Vec3 unit_direction = vec3_normalize(next.direction);
+            const double a = 0.5 * (unit_direction.y + 1.0);
+            Color c = color_lerp((Color){ 0.5, 0.7, 1.0 }, a);
+            c = (Color){
+                .r = attenuation * c.r,
+                .g = attenuation * c.g,
+                .b = attenuation * c.b,
+            };
+            return c;
+        }
     }
-
-    if (h.hit_anything) {
-        // If we don't substract the normal, we are using the
-        // uniform distribution, else we use lambertian
-        Vec3 direction = vec3_add(vec3_random_on_hemisphere(h.normal), h.normal);
-        Ray next = { .direction = direction, .origin = h.point };
-
-        Color c = ray_color(next, s, n_spheres, depth - 1);
-        const double reflectance = 0.8;
-        return (Color){
-            .r = reflectance * c.r,
-            .g = reflectance * c.g,
-            .b = reflectance * c.b,
-        };
-    }
-
-    Vec3 unit_direction = vec3_normalize(r.direction);
-    double a = 0.5 * (unit_direction.y + 1.0);
-    return color_lerp((Color){ 0.5, 0.7, 1.0 }, a);
+    return (Color){ 0 };
 }
 
+
 void
-render(const CameraSystem *cs, ImageSize s, const Spheres *world, size_t world_size)
+render(const CameraSystem *cs, ImageSize s, const Sphere *world, size_t world_size)
 {
     printf("P3\n%zu %zu\n255\n", s.width, s.height);
     for (size_t j = 0; j < s.height; ++j) {
