@@ -8,16 +8,16 @@
 #include <stddef.h>
 
 Hits
-hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval)
+hit_spheres(const Sphere *s, size_t n_spheres, Ray r, Interval interval)
 {
     assert(s != NULL);
-    bool hit_anything = false;
+    int hit_anything = 0;
     Vec3 last_normal = { 0 };
     Vec3 hit_point = { 0 };
 
     for (size_t i = 0; i < n_spheres; ++i) {
-        double radius = s->radiuses[i];
-        Vec3 center = s->centers[i];
+        double radius = s[i].radius;
+        Vec3 center = s[i].center;
 
         Vec3 oc = vec3_sub(r.origin, center);
         double a = vec3_norm_squared(r.direction);
@@ -39,7 +39,7 @@ hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval)
             }
         }
 
-        hit_anything = true;
+        hit_anything = 1;
         hit_point = ray_at(r, root);
         Vec3 outward_normal = vec3_div(vec3_sub(hit_point, center), radius);
 

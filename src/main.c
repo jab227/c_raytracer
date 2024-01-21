@@ -33,14 +33,11 @@ main(void)
 	     }
 	},
     };
-
-    Spheres world = {
-	    .centers = {
-		    [0] = {.x = 0.0, .y = -100.5, .z = -1.0},
-		    [1] = {.x = 0.0, .y = 0.0, .z = -1.0}
-	    },
-	    .radiuses = {100.0, 0.5,},
+#define N_SPHERES 2
+    Sphere world[N_SPHERES] = {
+        [0] = {{ .x = 0.0, .y = -100.5, .z = -1.0 }, 100.0},
+        [1] = { { .x = 0.0, .y = 0.0, .z = -1.0 },   0.5  },
     };
-    render(&cs, size, &world, 2);
+    render(&cs, size, world, N_SPHERES);
     return 0;
 }

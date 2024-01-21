@@ -18,7 +18,7 @@
  inverse of “gamma 2", which means an exponent of 1/gamma, which is
  just the square-root. */
 static Color
-color_linear_to_gamma(Color linear_color)
+color__linear_to_gamma(Color linear_color)
 {
     return (Color){
         sqrt(linear_color.r),
@@ -43,7 +43,7 @@ color_write(FILE *f, Color pixel, size_t samples_per_pixel)
     double scale = 1.0 / (double) samples_per_pixel;
 
     Color scaled_pixel = color_scale(pixel, scale);
-    Color gamma_pixel = color_linear_to_gamma(scaled_pixel);
+    Color gamma_pixel = color__linear_to_gamma(scaled_pixel);
 
     static const Interval intensity = { .tmin = 0.000, .tmax = 0.999 };
     uint8_t r = (uint8_t) (CLAMP * interval_clamp(intensity, gamma_pixel.r));

@@ -4,24 +4,29 @@
 #include "ray.h"
 #include "vec3.h"
 
-#include <stdbool.h>
 #include <stddef.h>
 
-#define N_SPHERES 2
+
+typedef enum
+{
+    MATERIAL_METAL = 0,
+    MATERIAL_LAMBERTIAN,
+} Material;
 
 typedef struct
 {
-    Vec3 centers[N_SPHERES];
-    double radiuses[N_SPHERES];
-} Spheres;
+    Vec3 center;
+    double radius;
+    Material material;
+} Sphere;
 
 typedef struct
 {
     Vec3 normal;
     Vec3 point;
-    bool hit_anything;
+    int hit_anything;
 } Hits;
 
-Hits hit_spheres(const Spheres *s, size_t n_spheres, Ray r, Interval interval);
+Hits hit_spheres(const Sphere *s, size_t n_spheres, Ray r, Interval interval);
 
 #endif
