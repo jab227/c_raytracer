@@ -1,7 +1,6 @@
 #ifndef PRNG_H_
 #define PRNG_H_
 
-#include <assert.h>
 double randomd();
 double randomd_in(double min, double max);
 
@@ -11,6 +10,7 @@ double randomd_in(double min, double max);
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
+#include <assert.h>
 
 #define MAGIC_VALUE 6364136223846793005ULL
 
@@ -62,5 +62,5 @@ randomd_in(double min, double max)
     return min + (max - min) * randomd();
 }
 
-#endif
-#endif
+#endif // PRNG_IMPL
+#endif // PRNG_H_

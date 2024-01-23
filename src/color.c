@@ -37,6 +37,16 @@ color_scale(Color c, double scale)
     };
 }
 
+Color
+color_attenuate(Color c, Color attenuation)
+{
+    return (Color){
+        .r = c.r * attenuation.r,
+        .g = c.g * attenuation.g,
+        .b = c.b * attenuation.b,
+    };
+}
+
 void
 color_write(FILE *f, Color pixel, size_t samples_per_pixel)
 {
@@ -59,4 +69,14 @@ color_lerp(Color c, double a)
     return (Color){ .r = (1.0 - a) + (a * c.r),
                     .g = (1.0 - a) + (a * c.g),
                     .b = (1.0 - a) + (a * c.b) };
+}
+
+Color
+color_add(Color lhs, Color rhs)
+{
+    return (Color){
+        .r = rhs.r + lhs.r,
+        .g = rhs.g + lhs.g,
+        .b = rhs.b + lhs.b,
+    };
 }

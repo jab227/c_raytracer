@@ -13,25 +13,25 @@ typedef struct
 {
     double height;
     double width;
-} ViewportSize;
+} Viewport_Size;
 
 typedef struct
 {
     Vec3 u;
     Vec3 v;
-} ViewportUV;
+} Viewport_UV;
 
 typedef struct
 {
-    ViewportUV uv;
-    ViewportSize size;
+    Viewport_UV uv;
+    Viewport_Size size;
 } Viewport;
 
 typedef struct
 {
     Vec3 du;
     Vec3 dv;
-} PixelDeltas;
+} Pixel_Deltas;
 
 typedef struct
 {
@@ -40,13 +40,13 @@ typedef struct
     size_t samples_per_pixel;
     double focal_length;
     int32_t max_depth;
-} CameraSystem;
+} Camera;
 
 typedef struct
 {
     size_t height;
     size_t width;
-} ImageSize;
+} Image_size;
 
 typedef struct
 {
@@ -55,9 +55,6 @@ typedef struct
 } ImagePos;
 
 Color ray_color(Ray r, const Sphere *s, size_t n_spheres, int32_t depth);
-void render(const CameraSystem *cs,
-            ImageSize s,
-            const Sphere *world,
-            size_t world_size);
+void render(const Camera *cs, Image_size s, const Sphere *world, size_t world_size);
 
 #endif

@@ -12,6 +12,7 @@ typedef struct
 
 void color_write(FILE *f, Color pixel, size_t samples_per_pixel);
 Color color_lerp(Color c, double a);
+Color color_add(Color lhs, Color rhs);
 Color color_scale(Color c, double scale);
-
+Color color_attenuate(Color c, Color attenuation);
 #endif
