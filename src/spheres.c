@@ -1,22 +1,24 @@
 #include "spheres.h"
+#include "vec3.h"
 
 #include <assert.h>
 #include <math.h>
 #include <stddef.h>
 
 Hits
-sphere_hit(const Sphere *s, size_t n_spheres, Ray r, Interval interval)
+sphere_hit(Sphere_View spheres, Ray r, Interval interval)
 {
     assert(s != NULL);
     int hit_anything = 0;
+    int is_front_face = 0;
     Vec3 last_normal = { 0 };
     Vec3 hit_point = { 0 };
     Material last_material = { 0 };
 
-    for (size_t i = 0; i < n_spheres; ++i) {
-        double radius = s[i].radius;
-        Vec3 center = s[i].center;
-        Material current_material = s[i].material;
+    for (size_t i = 0; i < spheres.len; ++i) {
+        double radius = spheres.data[i].radius;
+        Vec3 center = spheres.data[i].center;
+        Material current_material = spheres.data[i].material;
         Vec3 oc = vec3_sub(r.origin, center);
         double a = vec3_norm_squared(r.direction);
         double half_b = vec3_dot(oc, r.direction);
@@ -43,6 +45,7 @@ sphere_hit(const Sphere *s, size_t n_spheres, Ray r, Interval interval)
 
         if (vec3_dot(r.direction, outward_normal) < 0.0) {
             last_normal = outward_normal;
+            is_front_face = 1;
         } else {
             last_normal = vec3_neg(outward_normal);
         }
@@ -54,12 +57,35 @@ sphere_hit(const Sphere *s, size_t n_spheres, Ray r, Interval interval)
         .material = last_material,
         .normal = last_normal,
         .point = hit_point,
+        .is_front_face = is_front_face,
     };
+}
+
+static Vec3
+material__reflect(Vec3 v, Vec3 normal)
+{
+    // v - 2*<v,normal>*normal
+    double v_dot_n = vec3_dot(v, normal);
+    Vec3 two_b = vec3_mul(normal, v_dot_n * 2);
+    return vec3_sub(v, two_b);
+}
+
+static Vec3
+material__refract(Vec3 incident_dir, Vec3 normal, double eta_coeff)
+{
+    double dot_prod = vec3_dot(vec3_neg(incident_dir), normal);
+    double cos_theta = dot_prod < 1.0 ? dot_prod : 1.0;
+    Vec3 sum = vec3_add(incident_dir, vec3_mul(normal, cos_theta));
+    Vec3 perpendicular_out_ray_dir = vec3_mul(sum, eta_coeff);
+    double x = fabs(1.0 - vec3_norm_squared(perpendicular_out_ray_dir));
+    double parallel_out_ray_abs = -sqrt(x);
+    Vec3 parallel_out_ray_dir = vec3_mul(normal, parallel_out_ray_abs);
+    return vec3_add(parallel_out_ray_dir, perpendicular_out_ray_dir);
 }
 
 
 static Scatter_Result
-sphere__scatter_lambertian(Ray r, const Hits *record, double epsilon)
+material__scatter_lambertian(Ray r, const Hits *record, double epsilon)
 {
     (void) r;
 
@@ -82,35 +108,67 @@ sphere__scatter_lambertian(Ray r, const Hits *record, double epsilon)
 }
 
 static Scatter_Result
-sphere__scatter_metal(Ray r, const Hits *record, double epsilon)
+material__scatter_metal(Ray r, const Hits *record, double epsilon)
 {
     (void) epsilon;
     Vec3 unit_dir = vec3_normalize(r.direction);
-    Vec3 reflected_direction = vec3_reflect_normal(unit_dir, record->normal);
-
+    Vec3 reflected_direction = material__reflect(unit_dir, record->normal);
+    Vec3 fuzz_vec = vec3_mul(vec3_random_unit_vec_in_unit_sphere(),
+                             record->material.coefficient);
     Ray scattered = {
-        .direction = reflected_direction,
+        .direction = vec3_add(reflected_direction, fuzz_vec),
         .origin = record->point,
     };
 
     return (Scatter_Result){
         .scattered = scattered,
         .attenuation = record->material.albedo,
+        .hit_anything = vec3_dot(scattered.direction, record->normal) > 0,
+    };
+}
+
+static Scatter_Result
+material__scatter_dielectric(Ray r, const Hits *record, double epsilon)
+{
+    (void) epsilon;
+    Color attenuation = { 1.0, 1.0, 1.0 };
+    double coeff = record->material.coefficient;
+    double refraction_ratio = record->is_front_face ? (1.0 / coeff) : coeff;
+    Vec3 unit_dir = vec3_normalize(r.direction);
+    Vec3 normal = record->normal;
+    Vec3 refracted_dir = material__refract(unit_dir, normal, refraction_ratio);
+    Ray scattered = {
+        .direction = refracted_dir,
+        .origin = record->point,
+    };
+    return (Scatter_Result){
+        .scattered = scattered,
+        .attenuation = attenuation,
         .hit_anything = 1,
     };
 }
 
 Scatter_Result
-sphere_scatter(Ray r, const Hits *record, double epsilon)
+material_scatter(Ray r, const Hits *record, double epsilon)
 {
     Scatter_Result result = { 0 };
     switch (record->material.type) {
     case MATERIAL_TYPE_LAMBERTIAN:
-        result = sphere__scatter_lambertian(r, record, epsilon);
+        result = material__scatter_lambertian(r, record, epsilon);
         break;
     case MATERIAL_TYPE_METAL:
-        result = sphere__scatter_metal(r, record, epsilon);
+        result = material__scatter_metal(r, record, epsilon);
+        break;
+    case MATERIAL_TYPE_DIELECTRIC:
+        result = material__scatter_dielectric(r, record, epsilon);
         break;
     };
     return result;
+}
+
+Sphere_View
+sphere_view_from_ptr(const Sphere *data, size_t len)
+{
+    Sphere_View view = { .data = data, .len = len };
+    return view;
 }

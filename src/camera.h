@@ -52,9 +52,9 @@ typedef struct
 {
     size_t row;
     size_t col;
-} ImagePos;
+} Image_Pos;
 
-Color ray_color(Ray r, const Sphere *s, size_t n_spheres, int32_t depth);
-void render(const Camera *cs, Image_size s, const Sphere *world, size_t world_size);
+Color ray_color(Ray r, Sphere_View spheres, int32_t depth);
+void render(const Camera *cs, Image_size s, Sphere_View world);
 
 #endif

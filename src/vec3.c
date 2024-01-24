@@ -141,11 +141,3 @@ vec3_near_zero(Vec3 v, double epsilon)
            (fabs(v.z) < epsilon);
 }
 
-Vec3
-vec3_reflect_normal(Vec3 v, Vec3 normal)
-{
-    // v - 2*<v,normal>*normal
-    double v_dot_n = vec3_dot(v, normal);
-    Vec3 two_b = vec3_mul(normal, v_dot_n * 2);
-    return vec3_sub(v, two_b);
-}

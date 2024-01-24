@@ -49,7 +49,7 @@ camera__compute_pixel_00_location(Vec3 viewport_upper_left, Pixel_Deltas dudv)
 }
 
 static Vec3
-camera__compute_pixel_center(Vec3 pixel_00_loc, Pixel_Deltas dudv, ImagePos p)
+camera__compute_pixel_center(Vec3 pixel_00_loc, Pixel_Deltas dudv, Image_Pos p)
 {
     double col = (double) p.col;
     double row = (double) p.row;
@@ -70,7 +70,7 @@ camera__pixel_sample_square(Pixel_Deltas dudv)
 }
 
 static Ray
-camera__get_ray(const Camera *cs, ImagePos pos, Image_size s)
+camera__get_ray(const Camera *cs, Image_Pos pos, Image_size s)
 {
     Pixel_Deltas dudv = compute__pixel_deltas_location(cs->viewport.uv, s);
     Vec3 viewport_upper_left = camera__compute_viewport_upper_left(cs);
@@ -87,19 +87,19 @@ camera__get_ray(const Camera *cs, ImagePos pos, Image_size s)
 }
 
 Color
-ray_color(Ray r, const Sphere *s, size_t n_spheres, int32_t depth)
+ray_color(Ray r, Sphere_View spheres, int32_t depth)
 {
     // NOTE(juan): Fix shadow acne -> tmin from 0.0 to 0.001
     Interval interval = { .tmin = 0.001, .tmax = INFINITY };
     Color attenuation = { 1.0, 1.0, 1.0 };
     Ray next = r;
     for (int32_t i = 0; i < depth; ++i) {
-        Hits record = sphere_hit(s, n_spheres, next, interval);
+        Hits record = sphere_hit(spheres, next, interval);
         if (record.hit_anything) {
             // This was the important part when transforming the
             // algorithm from recursive to iterative. The thing being
             // modified was the reflectance
-            Scatter_Result result = sphere_scatter(next, &record, EPSILON);
+            Scatter_Result result = material_scatter(next, &record, EPSILON);
             if (result.hit_anything) {
                 attenuation = color_attenuate(attenuation, result.attenuation);
                 next = result.scattered;
@@ -118,16 +118,16 @@ ray_color(Ray r, const Sphere *s, size_t n_spheres, int32_t depth)
 
 
 void
-render(const Camera *cs, Image_size s, const Sphere *world, size_t world_size)
+render(const Camera *cs, Image_size s, Sphere_View world)
 {
     printf("P3\n%zu %zu\n255\n", s.width, s.height);
     for (size_t j = 0; j < s.height; ++j) {
         for (size_t i = 0; i < s.width; ++i) {
             Color pixel = { 0 };
-            ImagePos pos = { .col = i, .row = j };
+            Image_Pos pos = { .col = i, .row = j };
             for (size_t sample = 0; sample < cs->samples_per_pixel; ++sample) {
                 Ray r = camera__get_ray(cs, pos, s);
-                Color new_color = ray_color(r, world, world_size, cs->max_depth);
+                Color new_color = ray_color(r, world, cs->max_depth);
                 pixel = color_add(pixel, new_color);
             }
             color_write(stdout, pixel, cs->samples_per_pixel);

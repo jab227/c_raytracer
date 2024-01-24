@@ -24,6 +24,6 @@ Vec3 vec3_random_in(double min, double max);
 Vec3 vec3_random_in_unit_sphere(void);
 Vec3 vec3_random_unit_vec_in_unit_sphere(void);
 Vec3 vec3_random_on_hemisphere(Vec3 normal);
-Vec3 vec3_reflect_normal(Vec3 v, Vec3 normal);
+
 
 #endif
