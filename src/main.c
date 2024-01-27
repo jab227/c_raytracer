@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #define ASPECT_RATIO(width, height) ((double) width / (double) height)
 
@@ -26,7 +27,7 @@ main(void)
     Camera cs = {
         .max_depth = 50,
         .focal_length = 1.0,
-        .samples_per_pixel = 500,
+        .samples_per_pixel = 100,
         .center = {0},
         .viewport = {
 	     .size = {.height = viewport_height, .width = viewport_width,},
@@ -37,7 +38,7 @@ main(void)
 	},
     };
     // TODO(juan): render to a buffer to make it more format agnostic
-#define N_SPHERES 4
+#define N_SPHERES 5
     Sphere ground = {
         .center = { 0.0, -100.5, -1.0 },
         .radius = 100.0,
@@ -47,15 +48,22 @@ main(void)
     Sphere center = {
         .center = { 0.0, 0.0, -1.0 },
         .radius = 0.5,
-        .material = { .type = MATERIAL_TYPE_DIELECTRIC, .coefficient = 1.5, }
+        .material = { .type = MATERIAL_TYPE_LAMBERTIAN, .albedo = { 0.1, 0.2, 0.5 } }
     };
     // clang-format off
+    Sphere left_inner = {
+        .center = {-1.0, 0.0, -1.0},
+        .radius = -0.4,
+        .material = { 
+		.type = MATERIAL_TYPE_DIELECTRIC,
+		.coefficient = 1.5,
+	}
+    };
     Sphere left = {
         .center = {-1.0, 0.0, -1.0},
         .radius = 0.5,
         .material = { 
 		.type = MATERIAL_TYPE_DIELECTRIC,
-		.albedo = { 0.8, 0.8, 0.8 },
 		.coefficient = 1.5,
 	}
     };
@@ -66,13 +74,13 @@ main(void)
         .material = {
 		.type = MATERIAL_TYPE_METAL,
 		.albedo = { 0.8, 0.6, 0.2 },
-		.coefficient = 1.0,
+		.coefficient = 0.0,
 	}
     };
     // clang-format on
 
     // Dont forget the order
-    Sphere data[N_SPHERES] = { ground, left, right, center };
+    Sphere data[N_SPHERES] = { ground, center, left, left_inner, right };
     Sphere_View world = sphere_view_from_ptr(data, N_SPHERES);
     render(&cs, size, world);
     return 0;

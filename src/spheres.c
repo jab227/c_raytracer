@@ -1,14 +1,14 @@
 #include "spheres.h"
+#include "prng.h"
 #include "vec3.h"
 
-#include <assert.h>
 #include <math.h>
 #include <stddef.h>
+#include <stdio.h>
 
 Hits
 sphere_hit(Sphere_View spheres, Ray r, Interval interval)
 {
-    assert(s != NULL);
     int hit_anything = 0;
     int is_front_face = 0;
     Vec3 last_normal = { 0 };
@@ -18,7 +18,7 @@ sphere_hit(Sphere_View spheres, Ray r, Interval interval)
     for (size_t i = 0; i < spheres.len; ++i) {
         double radius = spheres.data[i].radius;
         Vec3 center = spheres.data[i].center;
-        Material current_material = spheres.data[i].material;
+         Material current_material = spheres.data[i].material;
         Vec3 oc = vec3_sub(r.origin, center);
         double a = vec3_norm_squared(r.direction);
         double half_b = vec3_dot(oc, r.direction);
@@ -74,7 +74,7 @@ static Vec3
 material__refract(Vec3 incident_dir, Vec3 normal, double eta_coeff)
 {
     double dot_prod = vec3_dot(vec3_neg(incident_dir), normal);
-    double cos_theta = dot_prod < 1.0 ? dot_prod : 1.0;
+    double cos_theta = fmin(dot_prod, 1.0);
     Vec3 sum = vec3_add(incident_dir, vec3_mul(normal, cos_theta));
     Vec3 perpendicular_out_ray_dir = vec3_mul(sum, eta_coeff);
     double x = fabs(1.0 - vec3_norm_squared(perpendicular_out_ray_dir));
@@ -127,6 +127,16 @@ material__scatter_metal(Ray r, const Hits *record, double epsilon)
     };
 }
 
+static double
+material__reflectance(double cosine, double refraction_idx)
+{
+    // Schlicks approximation for reflectance
+    double r0 = (1.0 - refraction_idx) / (1.0 + refraction_idx);
+    r0 = r0 * r0;
+    double x = 1.0 - cosine;
+    return r0 + ((1.0 - r0) * (x * x * x * x * x));
+}
+
 static Scatter_Result
 material__scatter_dielectric(Ray r, const Hits *record, double epsilon)
 {
@@ -134,11 +144,25 @@ material__scatter_dielectric(Ray r, const Hits *record, double epsilon)
     Color attenuation = { 1.0, 1.0, 1.0 };
     double coeff = record->material.coefficient;
     double refraction_ratio = record->is_front_face ? (1.0 / coeff) : coeff;
+
     Vec3 unit_dir = vec3_normalize(r.direction);
     Vec3 normal = record->normal;
-    Vec3 refracted_dir = material__refract(unit_dir, normal, refraction_ratio);
+
+    double dot_prod = vec3_dot(vec3_neg(unit_dir), normal);
+    double cos_theta = fmin(dot_prod, 1.0);
+    double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+
+    int cannot_refract = refraction_ratio * sin_theta > 1.0;
+    int reflect = material__reflectance(cos_theta, refraction_ratio) > randomd();
+    Vec3 direction = { 0 };
+    if (cannot_refract || reflect) {
+        direction = material__reflect(unit_dir, normal);
+    } else {
+        direction = material__refract(unit_dir, normal, refraction_ratio);
+    }
+
     Ray scattered = {
-        .direction = refracted_dir,
+        .direction = direction,
         .origin = record->point,
     };
     return (Scatter_Result){
