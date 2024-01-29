@@ -14,11 +14,10 @@ sphere_hit(Sphere_View spheres, Ray r, Interval interval)
     Vec3 last_normal = { 0 };
     Vec3 hit_point = { 0 };
     Material last_material = { 0 };
-
     for (size_t i = 0; i < spheres.len; ++i) {
+        Material current_material = spheres.data[i].material;
         double radius = spheres.data[i].radius;
         Vec3 center = spheres.data[i].center;
-         Material current_material = spheres.data[i].material;
         Vec3 oc = vec3_sub(r.origin, center);
         double a = vec3_norm_squared(r.direction);
         double half_b = vec3_dot(oc, r.direction);
@@ -38,18 +37,18 @@ sphere_hit(Sphere_View spheres, Ray r, Interval interval)
                 continue;
             }
         }
-
+	interval.tmax = root;
         hit_anything = 1;
         hit_point = ray_at(r, root);
+        last_material = current_material;
         Vec3 outward_normal = vec3_div(vec3_sub(hit_point, center), radius);
-
         if (vec3_dot(r.direction, outward_normal) < 0.0) {
             last_normal = outward_normal;
             is_front_face = 1;
         } else {
             last_normal = vec3_neg(outward_normal);
+            is_front_face = 0;
         }
-        last_material = current_material;
     }
 
     return (Hits){
@@ -71,11 +70,11 @@ material__reflect(Vec3 v, Vec3 normal)
 }
 
 static Vec3
-material__refract(Vec3 incident_dir, Vec3 normal, double eta_coeff)
+material__refract(Vec3 incident_unit_dir, Vec3 normal, double eta_coeff)
 {
-    double dot_prod = vec3_dot(vec3_neg(incident_dir), normal);
+    double dot_prod = vec3_dot(vec3_neg(incident_unit_dir), normal);
     double cos_theta = fmin(dot_prod, 1.0);
-    Vec3 sum = vec3_add(incident_dir, vec3_mul(normal, cos_theta));
+    Vec3 sum = vec3_add(incident_unit_dir, vec3_mul(normal, cos_theta));
     Vec3 perpendicular_out_ray_dir = vec3_mul(sum, eta_coeff);
     double x = fabs(1.0 - vec3_norm_squared(perpendicular_out_ray_dir));
     double parallel_out_ray_abs = -sqrt(x);
@@ -134,7 +133,7 @@ material__reflectance(double cosine, double refraction_idx)
     double r0 = (1.0 - refraction_idx) / (1.0 + refraction_idx);
     r0 = r0 * r0;
     double x = 1.0 - cosine;
-    return r0 + ((1.0 - r0) * (x * x * x * x * x));
+    return r0 + (1.0 - r0) * (x * x * x * x * x);
 }
 
 static Scatter_Result

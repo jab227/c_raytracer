@@ -54,7 +54,7 @@ main(void)
     Sphere left_inner = {
         .center = {-1.0, 0.0, -1.0},
         .radius = -0.4,
-        .material = { 
+        .material = {
 		.type = MATERIAL_TYPE_DIELECTRIC,
 		.coefficient = 1.5,
 	}
@@ -80,7 +80,7 @@ main(void)
     // clang-format on
 
     // Dont forget the order
-    Sphere data[N_SPHERES] = { ground, center, left, left_inner, right };
+    Sphere data[N_SPHERES] = { ground, left, left_inner, right, center };
     Sphere_View world = sphere_view_from_ptr(data, N_SPHERES);
     render(&cs, size, world);
     return 0;

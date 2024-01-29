@@ -89,10 +89,10 @@ camera__get_ray(const Camera *cs, Image_Pos pos, Image_size s)
 Color
 ray_color(Ray r, Sphere_View spheres, int32_t depth)
 {
-    // NOTE(juan): Fix shadow acne -> tmin from 0.0 to 0.001
-    Interval interval = { .tmin = 0.001, .tmax = INFINITY };
     Color attenuation = { 1.0, 1.0, 1.0 };
     Ray next = r;
+    // NOTE(juan): Fix shadow acne -> tmin from 0.0 to 0.001
+    Interval interval = { .tmin = 0.001, .tmax = INFINITY };
     for (int32_t i = 0; i < depth; ++i) {
         Hits record = sphere_hit(spheres, next, interval);
         if (record.hit_anything) {
@@ -103,8 +103,6 @@ ray_color(Ray r, Sphere_View spheres, int32_t depth)
             if (result.hit_anything) {
                 attenuation = color_attenuate(attenuation, result.attenuation);
                 next = result.scattered;
-            } else {
-                break;
             }
         } else {
             const Vec3 unit_direction = vec3_normalize(next.direction);
