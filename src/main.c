@@ -29,7 +29,6 @@ main(void)
     const Vec3 lookat = { 0.0, 0.0, -1.0 };
     const Vec3 vup = { 0.0, 1.0, 0.0 };
     const Vec3 camera_view_dir = vec3_sub(lookfrom, lookat);
-    const double focal_length = vec3_norm_squared(camera_view_dir);
     const Vec3 w = vec3_normalize(camera_view_dir);
     const Vec3 u = vec3_normalize(vec3_cross(vup, w));
     const Vec3 v = vec3_cross(w, u);
@@ -38,10 +37,11 @@ main(void)
     Camera cs = {
         .max_depth = 50,
         .real_aspect_ratio = real_ratio,
-        .focal_length = focal_length,
         .samples_per_pixel = 100,
         .center = lookfrom,
         .vfov = vfov,
+        .defocus_angle = degrees_to_radians(10.0),
+        .focus_distance = 3.4,
         .basis = {u, v, w}
     };
     init_viewport(&cs);
@@ -88,7 +88,7 @@ main(void)
     // clang-format on
 
     // Dont forget the order
-    Sphere data[N_SPHERES] = { ground, center,left_inner, left, right };
+    Sphere data[N_SPHERES] = { ground, center, left_inner, left, right };
     Sphere_View world = sphere_view_from_ptr(data, N_SPHERES);
     render(&cs, size, world);
     return 0;

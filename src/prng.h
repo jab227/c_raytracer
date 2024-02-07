@@ -3,6 +3,7 @@
 
 double randomd();
 double randomd_in(double min, double max);
+#endif // PRNG_H_
 
 #ifdef PRNG_IMPL
 
@@ -63,4 +64,4 @@ randomd_in(double min, double max)
 }
 
 #endif // PRNG_IMPL
-#endif // PRNG_H_
+

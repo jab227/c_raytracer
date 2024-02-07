@@ -46,7 +46,8 @@ typedef struct
     Camera_Frame_Basis basis;
     Vec3 center;
     size_t samples_per_pixel;
-    double focal_length;
+    double focus_distance;
+    double defocus_angle;
     double real_aspect_ratio;
     double vfov;  // In radians
     int32_t max_depth;

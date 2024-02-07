@@ -118,6 +118,17 @@ vec3_random_in_unit_sphere()
 }
 
 Vec3
+vec3_random_in_unit_disk()
+{
+    for (;;) {
+        Vec3 v = { randomd_in(-1.0, 1.0), randomd_in(-1.0, 1.0), 0.0 };
+        if (vec3_norm_squared(v) < 1.0) {
+            return v;
+        }
+    }
+}
+
+Vec3
 vec3_random_unit_vec_in_unit_sphere()
 {
     return vec3_normalize(vec3_random_in_unit_sphere());
@@ -140,4 +151,3 @@ vec3_near_zero(Vec3 v, double epsilon)
     return (fabs(v.x) < epsilon) && (fabs(v.y) < epsilon) &&
            (fabs(v.z) < epsilon);
 }
-

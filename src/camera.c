@@ -17,7 +17,7 @@
 #define EPSILON 1e-8
 
 static Pixel_Deltas
-compute__pixel_deltas_location(Viewport_UV uv, Image_size size)
+camera__compute_pixel_deltas_location(Viewport_UV uv, Image_size size)
 {
     double image_width = (double) size.width;
     double image_height = (double) size.height;
@@ -33,7 +33,7 @@ camera__compute_viewport_upper_left(const Camera *cs)
 {
     Viewport_UV uv = cs->viewport.uv;
     // camera_center - vec3{0,0,focal_lenght} - viewport_u / 2 - viewport_v / 2
-    Vec3 distance_from_center = vec3_mul(cs->basis.w, cs->focal_length);
+    Vec3 distance_from_center = vec3_mul(cs->basis.w, cs->focus_distance);
     Vec3 viewport_add = vec3_add(uv.u, uv.v);
 
     // camera_center - (ditance_from_center + 0.5 (viewport_u + viewpofrt_v))
@@ -69,19 +69,38 @@ camera__pixel_sample_square(Pixel_Deltas dudv)
     return vec3_add(vec3_mul(dudv.du, px), vec3_mul(dudv.dv, py));
 }
 
-static Ray
-camera__get_ray(const Camera *cs, Image_Pos pos, Image_size s)
+static Vec3
+camera__defocus_disk_sample(Vec3 defocus_disk_u, Vec3 defocus_disk_v, Vec3 center)
 {
-    Pixel_Deltas dudv = compute__pixel_deltas_location(cs->viewport.uv, s);
-    Vec3 viewport_upper_left = camera__compute_viewport_upper_left(cs);
+    Vec3 p = vec3_random_in_unit_disk();
+    Vec3 u = vec3_mul(defocus_disk_u, p.x);
+    Vec3 v = vec3_mul(defocus_disk_v, p.y);
+    return vec3_add(center, vec3_add(u, v));
+}
+
+static Ray
+camera__get_ray(const Camera *c, Image_Pos pos, Image_size s)
+{
+    Pixel_Deltas dudv = camera__compute_pixel_deltas_location(c->viewport.uv, s);
+    Vec3 viewport_upper_left = camera__compute_viewport_upper_left(c);
     Vec3 pixel00_loc =
         camera__compute_pixel_00_location(viewport_upper_left, dudv);
-
+    double defocus_radius = c->focus_distance * tan(c->defocus_angle / 2.0);
+    Vec3 defocus_disk_u = vec3_mul(c->basis.u, defocus_radius);
+    Vec3 defocus_disk_v = vec3_mul(c->basis.v, defocus_radius);
+    // Until here the values can be cached
     Vec3 pixel_center = camera__compute_pixel_center(pixel00_loc, dudv, pos);
     Vec3 pixel_sample = vec3_add(pixel_center, camera__pixel_sample_square(dudv));
-    Vec3 ray_direction = vec3_sub(pixel_sample, cs->center);
-
-    Ray r = { .direction = ray_direction, .origin = cs->center };
+    Vec3 ray_origin = (c->defocus_angle <= 0)
+                          ? (Vec3){ 0 }
+                          : camera__defocus_disk_sample(defocus_disk_u,
+                                                        defocus_disk_v,
+                                                        c->center);
+    Vec3 ray_direction = vec3_sub(pixel_sample, ray_origin);
+    Ray r = {
+        .direction = ray_direction,
+        .origin = ray_origin,
+    };
 
     return r;
 }
@@ -119,7 +138,7 @@ init_viewport(Camera *c)
 {
     double theta = c->vfov;
     double h = tan(theta / 2);
-    double height = 2 * h * c->focal_length;
+    double height = 2 * h * c->focus_distance;
     Viewport_Size vp_size = {
         .height = height,
         .width = height * c->real_aspect_ratio,
