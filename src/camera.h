@@ -35,10 +35,20 @@ typedef struct
 
 typedef struct
 {
+    Vec3 u;
+    Vec3 v;
+    Vec3 w;
+} Camera_Frame_Basis;
+
+typedef struct
+{
     Viewport viewport;
+    Camera_Frame_Basis basis;
     Vec3 center;
     size_t samples_per_pixel;
     double focal_length;
+    double real_aspect_ratio;
+    double vfov;  // In radians
     int32_t max_depth;
 } Camera;
 
@@ -55,6 +65,7 @@ typedef struct
 } Image_Pos;
 
 Color ray_color(Ray r, Sphere_View spheres, int32_t depth);
+void init_viewport(Camera *c);
 void render(const Camera *cs, Image_size s, Sphere_View world);
 
 #endif

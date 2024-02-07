@@ -33,10 +33,10 @@ camera__compute_viewport_upper_left(const Camera *cs)
 {
     Viewport_UV uv = cs->viewport.uv;
     // camera_center - vec3{0,0,focal_lenght} - viewport_u / 2 - viewport_v / 2
-    Vec3 distance_from_center = { .x = 0.0, .y = 0.0, .z = cs->focal_length };
+    Vec3 distance_from_center = vec3_mul(cs->basis.w, cs->focal_length);
     Vec3 viewport_add = vec3_add(uv.u, uv.v);
 
-    // camera_center - (ditance_from_center + 0.5 (viewport_u + viewport_v))
+    // camera_center - (ditance_from_center + 0.5 (viewport_u + viewpofrt_v))
     return vec3_sub(cs->center,
                     vec3_add(distance_from_center, vec3_mul(viewport_add, 0.5)));
 }
@@ -114,6 +114,24 @@ ray_color(Ray r, Sphere_View spheres, int32_t depth)
     return (Color){ 0 };
 }
 
+void
+init_viewport(Camera *c)
+{
+    double theta = c->vfov;
+    double h = tan(theta / 2);
+    double height = 2 * h * c->focal_length;
+    Viewport_Size vp_size = {
+        .height = height,
+        .width = height * c->real_aspect_ratio,
+    };
+
+    Viewport vp = {
+        .size = vp_size,
+        .uv = {.u = vec3_mul(c->basis.u, vp_size.width),
+               .v = vec3_mul(vec3_neg(c->basis.v), vp_size.height)}
+    };
+    c->viewport = vp;
+}
 
 void
 render(const Camera *cs, Image_size s, Sphere_View world)

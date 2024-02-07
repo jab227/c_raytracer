@@ -1,11 +1,18 @@
 #include "camera.h"
 #include "spheres.h"
-
+#include "vec3.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 
 #define ASPECT_RATIO(width, height) ((double) width / (double) height)
+#define RT_PI 3.1415926535897932385
+
+static double
+degrees_to_radians(double angle)
+{
+    return angle * RT_PI / 180.0;
+}
 
 int
 main(void)
@@ -16,29 +23,30 @@ main(void)
     image_height = image_height < 1 ? 1 : image_height;
     assert(image_height >= 1);
     Image_size size = { .width = image_width, .height = image_height };
-
-    double viewport_height = 2.0;
-    double real_ratio = ASPECT_RATIO(size.width, size.height);
-    double viewport_width = viewport_height * real_ratio;
-
-
+    const double real_ratio = ASPECT_RATIO(size.width, size.height);
+    const double vfov = degrees_to_radians(20.0);
+    const Vec3 lookfrom = { -2.0, 2.0, 1.0 };
+    const Vec3 lookat = { 0.0, 0.0, -1.0 };
+    const Vec3 vup = { 0.0, 1.0, 0.0 };
+    const Vec3 camera_view_dir = vec3_sub(lookfrom, lookat);
+    const double focal_length = vec3_norm_squared(camera_view_dir);
+    const Vec3 w = vec3_normalize(camera_view_dir);
+    const Vec3 u = vec3_normalize(vec3_cross(vup, w));
+    const Vec3 v = vec3_cross(w, u);
     // Camera settings
     // TODO(juan): Make cmd parser for config
     Camera cs = {
         .max_depth = 50,
-        .focal_length = 1.0,
+        .real_aspect_ratio = real_ratio,
+        .focal_length = focal_length,
         .samples_per_pixel = 100,
-        .center = {0},
-        .viewport = {
-	     .size = {.height = viewport_height, .width = viewport_width,},
-	     .uv = {
-		  .u = {.x = viewport_width},
-		  .v = {.y = -viewport_height},
-	     }
-	},
+        .center = lookfrom,
+        .vfov = vfov,
+        .basis = {u, v, w}
     };
-    // TODO(juan): render to a buffer to make it more format agnostic
+    init_viewport(&cs);
 #define N_SPHERES 5
+    // TODO(juan): render to a buffer to make it more format agnostic
     Sphere ground = {
         .center = { 0.0, -100.5, -1.0 },
         .radius = 100.0,
@@ -62,7 +70,7 @@ main(void)
     Sphere left = {
         .center = {-1.0, 0.0, -1.0},
         .radius = 0.5,
-        .material = { 
+        .material = {
 		.type = MATERIAL_TYPE_DIELECTRIC,
 		.coefficient = 1.5,
 	}
@@ -80,7 +88,7 @@ main(void)
     // clang-format on
 
     // Dont forget the order
-    Sphere data[N_SPHERES] = { ground, left, left_inner, right, center };
+    Sphere data[N_SPHERES] = { ground, center,left_inner, left, right };
     Sphere_View world = sphere_view_from_ptr(data, N_SPHERES);
     render(&cs, size, world);
     return 0;
