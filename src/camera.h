@@ -42,16 +42,17 @@ typedef struct
 
 typedef struct
 {
-    Viewport viewport;
-    Camera_Frame_Basis basis;
-    Vec3 center;
-    size_t samples_per_pixel;
+    Vec3 lookfrom;
+    Vec3 lookat;
+    Vec3 vup;
+    double aspect_ratio;
+    double vfov;           // In degrees
+    double defocus_angle;  // In degrees
     double focus_distance;
-    double defocus_angle;
-    double real_aspect_ratio;
-    double vfov;  // In radians
+    size_t image_width;
+    int32_t samples_per_pixel;
     int32_t max_depth;
-} Camera;
+} Camera_Config;
 
 typedef struct
 {
@@ -61,12 +62,28 @@ typedef struct
 
 typedef struct
 {
+    Camera_Frame_Basis basis;
+    Viewport viewport;
+    Pixel_Deltas dudv;
+    Vec3 center;
+    Vec3 pixel_00_loc;
+    Vec3 defocus_disk_u;
+    Vec3 defocus_disk_v;
+    Image_size size;
+    double defocus_angle;  // In radians
+    int32_t samples_per_pixel;
+    int32_t max_depth;
+} Camera;
+
+
+typedef struct
+{
     size_t row;
     size_t col;
 } Image_Pos;
 
 Color ray_color(Ray r, Sphere_View spheres, int32_t depth);
-void init_viewport(Camera *c);
-void render(const Camera *cs, Image_size s, Sphere_View world);
+Camera camera_init(const Camera_Config *cfg);
+void render(const Camera *cs, Sphere_View world);
 
 #endif

@@ -88,7 +88,7 @@ material__scatter_lambertian(Ray r, const Hits *record, double epsilon)
 {
     (void) r;
 
-    Vec3 rand_vec = vec3_random_on_hemisphere(record->normal);
+    Vec3 rand_vec = vec3_random_unit_vec_in_unit_sphere();
     Vec3 scatter_direction = vec3_add(record->point, rand_vec);
     if (vec3_near_zero(scatter_direction, epsilon)) {
         scatter_direction = record->normal;

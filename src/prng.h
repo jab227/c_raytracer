@@ -1,7 +1,7 @@
 #ifndef PRNG_H_
 #define PRNG_H_
 
-double randomd();
+double randomd(void);
 double randomd_in(double min, double max);
 #endif // PRNG_H_
 

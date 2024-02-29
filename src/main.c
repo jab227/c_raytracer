@@ -1,95 +1,106 @@
 #include "camera.h"
+#include "color.h"
+#include "prng.h"
 #include "spheres.h"
 #include "vec3.h"
+
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
-
-#define ASPECT_RATIO(width, height) ((double) width / (double) height)
-#define RT_PI 3.1415926535897932385
-
-static double
-degrees_to_radians(double angle)
-{
-    return angle * RT_PI / 180.0;
-}
+#include <stdlib.h>
 
 int
 main(void)
 {
-    const double aspect_ratio = 16.0 / 9.0;
-    const size_t image_width = 400;
-    size_t image_height = (size_t) ((double) image_width / aspect_ratio);
-    image_height = image_height < 1 ? 1 : image_height;
-    assert(image_height >= 1);
-    Image_size size = { .width = image_width, .height = image_height };
-    const double real_ratio = ASPECT_RATIO(size.width, size.height);
-    const double vfov = degrees_to_radians(20.0);
-    const Vec3 lookfrom = { -2.0, 2.0, 1.0 };
-    const Vec3 lookat = { 0.0, 0.0, -1.0 };
-    const Vec3 vup = { 0.0, 1.0, 0.0 };
-    const Vec3 camera_view_dir = vec3_sub(lookfrom, lookat);
-    const Vec3 w = vec3_normalize(camera_view_dir);
-    const Vec3 u = vec3_normalize(vec3_cross(vup, w));
-    const Vec3 v = vec3_cross(w, u);
     // Camera settings
     // TODO(juan): Make cmd parser for config
-    Camera cs = {
+    Camera_Config cfg = {
+        .aspect_ratio = 16.0 / 9.0,
+        .image_width = 1200,
+        .focus_distance = 10.0,
+        .defocus_angle = 0.6,
+        .vfov = 20.0,
+        .lookfrom = {13.0, 2.0, 3.0},
+        .lookat = { 0.0, 0.0, 0.0},
+        .vup = { 0.0, 1.0, 0.0},
+        .samples_per_pixel = 500,
         .max_depth = 50,
-        .real_aspect_ratio = real_ratio,
-        .samples_per_pixel = 100,
-        .center = lookfrom,
-        .vfov = vfov,
-        .defocus_angle = degrees_to_radians(10.0),
-        .focus_distance = 3.4,
-        .basis = {u, v, w}
     };
-    init_viewport(&cs);
-#define N_SPHERES 5
+    Camera c = camera_init(&cfg);
     // TODO(juan): render to a buffer to make it more format agnostic
     Sphere ground = {
-        .center = { 0.0, -100.5, -1.0 },
-        .radius = 100.0,
-        .material = { .type = MATERIAL_TYPE_LAMBERTIAN, .albedo = { 0.8, 0.8, 0.0 } }
+        .center = { 0.0, -1000.0, 0.0 },
+        .radius = 1000.0,
+        .material = { .type = MATERIAL_TYPE_LAMBERTIAN, .albedo = { 0.5, 0.5, 0.5 } }
     };
 
-    Sphere center = {
-        .center = { 0.0, 0.0, -1.0 },
-        .radius = 0.5,
-        .material = { .type = MATERIAL_TYPE_LAMBERTIAN, .albedo = { 0.1, 0.2, 0.5 } }
-    };
+    Sphere *s = (Sphere *) calloc(488, sizeof(Sphere));
+    s[0] = ground;
+    int64_t len = 1;
+    for (int32_t i = -11; i < 11; ++i) {
+        for (int32_t j = -11; j < 11; ++j) {
+            Vec3 center = {
+                .x = i + 0.9 * randomd(),
+                .y = 0.2,
+                .z = j + 0.9 * randomd(),
+            };
+            Vec3 p = { 4.0, 0.2, 0 };
+            if (vec3_norm(vec3_sub(center, p)) > 0.9) {
+                double choose_material = randomd();
+                Material m;
+                if (choose_material < 0.8) {
+                    m.albedo = color_prod(color_random(), color_random());
+                    m.type = MATERIAL_TYPE_LAMBERTIAN;
+                } else if (choose_material < 0.95) {
+                    m.albedo = color_random_in(0.5, 1.0);
+                    m.coefficient = randomd_in(0.0, 0.5);
+                    m.type = MATERIAL_TYPE_METAL;
+                } else {
+                    m.coefficient = 1.5;
+                    m.type = MATERIAL_TYPE_DIELECTRIC;
+                }
+                s[len] =
+                    (Sphere){ .center = center, .material = m, .radius = 0.2 };
+                len++;
+            }
+        }
+    }
+
     // clang-format off
-    Sphere left_inner = {
-        .center = {-1.0, 0.0, -1.0},
-        .radius = -0.4,
+    s[len] = (Sphere){
+        .center = {0.0, 1.0, 0.0},
+        .radius = 1.0,
         .material = {
 		.type = MATERIAL_TYPE_DIELECTRIC,
 		.coefficient = 1.5,
 	}
     };
-    Sphere left = {
-        .center = {-1.0, 0.0, -1.0},
-        .radius = 0.5,
+    len++;
+    s[len]  = (Sphere){
+        .center = {-4.0, 1.0, 0.0},
+        .radius = 1.0,
         .material = {
-		.type = MATERIAL_TYPE_DIELECTRIC,
-		.coefficient = 1.5,
+		.type = MATERIAL_TYPE_LAMBERTIAN,
+		.albedo={0.4, 0.2, 0.1},
 	}
     };
-
-    Sphere right = {
-        .center = { 1.0, 0.0, -1.0 },
-        .radius = 0.5,
+    len++;
+    s[len]=(Sphere){
+        .center = { 4.0, 1.0, 0.0 },
+        .radius = 1.0,
         .material = {
 		.type = MATERIAL_TYPE_METAL,
-		.albedo = { 0.8, 0.6, 0.2 },
+		.albedo = { 0.7, 0.6, 0.5 },
 		.coefficient = 0.0,
 	}
     };
+    len++;
+    assert(len < 485);
     // clang-format on
-
     // Dont forget the order
-    Sphere data[N_SPHERES] = { ground, center, left_inner, left, right };
-    Sphere_View world = sphere_view_from_ptr(data, N_SPHERES);
-    render(&cs, size, world);
+    Sphere_View world = sphere_view_from_ptr(s, (size_t) len);
+    render(&c, world);
+    free(s);
     return 0;
 }

@@ -29,15 +29,17 @@ camera__compute_pixel_deltas_location(Viewport_UV uv, Image_size size)
 }
 
 static Vec3
-camera__compute_viewport_upper_left(const Camera *cs)
+camera__compute_viewport_upper_left(Viewport_UV uv,
+                                    Vec3 center,
+                                    Vec3 w,
+                                    double focus_distance)
 {
-    Viewport_UV uv = cs->viewport.uv;
     // camera_center - vec3{0,0,focal_lenght} - viewport_u / 2 - viewport_v / 2
-    Vec3 distance_from_center = vec3_mul(cs->basis.w, cs->focus_distance);
+    Vec3 distance_from_center = vec3_mul(w, focus_distance);
     Vec3 viewport_add = vec3_add(uv.u, uv.v);
 
     // camera_center - (ditance_from_center + 0.5 (viewport_u + viewpofrt_v))
-    return vec3_sub(cs->center,
+    return vec3_sub(center,
                     vec3_add(distance_from_center, vec3_mul(viewport_add, 0.5)));
 }
 
@@ -79,22 +81,17 @@ camera__defocus_disk_sample(Vec3 defocus_disk_u, Vec3 defocus_disk_v, Vec3 cente
 }
 
 static Ray
-camera__get_ray(const Camera *c, Image_Pos pos, Image_size s)
+camera__get_ray(const Camera *c, Image_Pos pos)
 {
-    Pixel_Deltas dudv = camera__compute_pixel_deltas_location(c->viewport.uv, s);
-    Vec3 viewport_upper_left = camera__compute_viewport_upper_left(c);
-    Vec3 pixel00_loc =
-        camera__compute_pixel_00_location(viewport_upper_left, dudv);
-    double defocus_radius = c->focus_distance * tan(c->defocus_angle / 2.0);
-    Vec3 defocus_disk_u = vec3_mul(c->basis.u, defocus_radius);
-    Vec3 defocus_disk_v = vec3_mul(c->basis.v, defocus_radius);
     // Until here the values can be cached
-    Vec3 pixel_center = camera__compute_pixel_center(pixel00_loc, dudv, pos);
-    Vec3 pixel_sample = vec3_add(pixel_center, camera__pixel_sample_square(dudv));
+    Vec3 pixel_center =
+        camera__compute_pixel_center(c->pixel_00_loc, c->dudv, pos);
+    Vec3 pixel_sample =
+        vec3_add(pixel_center, camera__pixel_sample_square(c->dudv));
     Vec3 ray_origin = (c->defocus_angle <= 0)
-                          ? (Vec3){ 0 }
-                          : camera__defocus_disk_sample(defocus_disk_u,
-                                                        defocus_disk_v,
+                          ? c->center
+                          : camera__defocus_disk_sample(c->defocus_disk_u,
+                                                        c->defocus_disk_v,
                                                         c->center);
     Vec3 ray_direction = vec3_sub(pixel_sample, ray_origin);
     Ray r = {
@@ -133,39 +130,91 @@ ray_color(Ray r, Sphere_View spheres, int32_t depth)
     return (Color){ 0 };
 }
 
-void
-init_viewport(Camera *c)
+
+#define RT_PI 3.1415926535897932385
+
+static double
+degrees_to_radians(double angle)
 {
-    double theta = c->vfov;
-    double h = tan(theta / 2);
-    double height = 2 * h * c->focus_distance;
-    Viewport_Size vp_size = {
+    return angle * RT_PI / 180.0;
+}
+#include <assert.h>
+
+#define ASPECT_RATIO(width, height) ((double) (width) / (double) (height))
+
+Camera
+camera_init(const Camera_Config *cfg)
+{
+    // Convert angles to radians
+    const double vfov_rad = degrees_to_radians(cfg->vfov);
+    const double defocus_angle_rad = degrees_to_radians(cfg->defocus_angle);
+
+    // Compute image height
+    size_t img_height = (size_t) ((double) cfg->image_width / cfg->aspect_ratio);
+    img_height = img_height < 1 ? 1 : img_height;
+    assert(image_height >= 1);
+    Image_size size = { .width = cfg->image_width, .height = img_height };
+
+    // Real aspect ratio
+    const double real_ratio = ASPECT_RATIO(size.width, size.height);
+
+    // Compute camera basis
+    const Vec3 camera_view_dir = vec3_sub(cfg->lookfrom, cfg->lookat);
+    const Vec3 w = vec3_normalize(camera_view_dir);
+    const Vec3 u = vec3_normalize(vec3_cross(cfg->vup, w));
+    const Vec3 v = vec3_cross(w, u);
+
+    // Create Viewport
+    const double theta = vfov_rad;
+    const double h = tan(theta / 2);
+    const double height = 2 * h * cfg->focus_distance;
+    const Viewport_Size vp_size = {
         .height = height,
-        .width = height * c->real_aspect_ratio,
+        .width = height * real_ratio,
+    };
+    const Viewport vp = {
+        .size = vp_size,
+        .uv = {.u = vec3_mul(u, vp_size.width),
+               .v = vec3_mul(vec3_neg(v), vp_size.height)}
     };
 
-    Viewport vp = {
-        .size = vp_size,
-        .uv = {.u = vec3_mul(c->basis.u, vp_size.width),
-               .v = vec3_mul(vec3_neg(c->basis.v), vp_size.height)}
+    const Pixel_Deltas dudv = camera__compute_pixel_deltas_location(vp.uv, size);
+    Vec3 vp_upper_left = camera__compute_viewport_upper_left(
+        vp.uv, cfg->lookfrom, w, cfg->focus_distance);
+    Vec3 pixel_00_loc = camera__compute_pixel_00_location(vp_upper_left, dudv);
+    double defocus_radius = cfg->focus_distance * tan(defocus_angle_rad / 2.0);
+    Vec3 defocus_disk_u = vec3_mul(u, defocus_radius);
+    Vec3 defocus_disk_v = vec3_mul(v, defocus_radius);
+
+    return (Camera){
+        .basis = {u, v, w},
+        .viewport = vp,
+        .dudv = dudv,
+        .center = cfg->lookfrom,
+        .pixel_00_loc = pixel_00_loc,
+        .defocus_disk_u = defocus_disk_u,
+        .defocus_disk_v = defocus_disk_v,
+        .size = size,
+        .defocus_angle = defocus_angle_rad,
+        .samples_per_pixel = cfg->samples_per_pixel,
+        .max_depth = cfg->max_depth,
     };
-    c->viewport = vp;
 }
 
 void
-render(const Camera *cs, Image_size s, Sphere_View world)
+render(const Camera *c, Sphere_View world)
 {
-    printf("P3\n%zu %zu\n255\n", s.width, s.height);
-    for (size_t j = 0; j < s.height; ++j) {
-        for (size_t i = 0; i < s.width; ++i) {
+    printf("P3\n%zu %zu\n255\n", c->size.width, c->size.height);
+    for (size_t j = 0; j < c->size.height; ++j) {
+        for (size_t i = 0; i < c->size.width; ++i) {
             Color pixel = { 0 };
             Image_Pos pos = { .col = i, .row = j };
-            for (size_t sample = 0; sample < cs->samples_per_pixel; ++sample) {
-                Ray r = camera__get_ray(cs, pos, s);
-                Color new_color = ray_color(r, world, cs->max_depth);
+            for (int32_t sample = 0; sample < c->samples_per_pixel; ++sample) {
+                Ray r = camera__get_ray(c, pos);
+                Color new_color = ray_color(r, world, c->max_depth);
                 pixel = color_add(pixel, new_color);
             }
-            color_write(stdout, pixel, cs->samples_per_pixel);
+            color_write(stdout, pixel, c->samples_per_pixel);
         }
     }
 }

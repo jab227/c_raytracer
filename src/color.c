@@ -1,5 +1,6 @@
 #include "color.h"
 #include "interval.h"
+#include "prng.h"
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -48,7 +49,7 @@ color_attenuate(Color c, Color attenuation)
 }
 
 void
-color_write(FILE *f, Color pixel, size_t samples_per_pixel)
+color_write(FILE *f, Color pixel, int32_t samples_per_pixel)
 {
     double scale = 1.0 / (double) samples_per_pixel;
 
@@ -78,5 +79,35 @@ color_add(Color lhs, Color rhs)
         .r = rhs.r + lhs.r,
         .g = rhs.g + lhs.g,
         .b = rhs.b + lhs.b,
+    };
+}
+
+Color
+color_prod(Color lhs, Color rhs)
+{
+    return (Color){
+        .r = rhs.r * lhs.r,
+        .g = rhs.g * lhs.g,
+        .b = rhs.b * lhs.b,
+    };
+}
+
+Color
+color_random()
+{
+    return (Color){
+        .r = randomd(),
+        .g = randomd(),
+        .b = randomd(),
+    };
+}
+
+Color
+color_random_in(double min, double max)
+{
+    return (Color){
+        .r = randomd_in(min, max),
+        .g = randomd_in(min, max),
+        .b = randomd_in(min, max),
     };
 }
