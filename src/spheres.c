@@ -37,7 +37,7 @@ sphere_hit(Sphere_View spheres, Ray r, Interval interval)
                 continue;
             }
         }
-	interval.tmax = root;
+        interval.tmax = root;
         hit_anything = 1;
         hit_point = ray_at(r, root);
         last_material = current_material;
@@ -140,7 +140,7 @@ static Scatter_Result
 material__scatter_dielectric(Ray r, const Hits *record, double epsilon)
 {
     (void) epsilon;
-    Color attenuation = { 1.0, 1.0, 1.0 };
+    Color attenuation = { {1.0, 1.0, 1.0} };
     double coeff = record->material.coefficient;
     double refraction_ratio = record->is_front_face ? (1.0 / coeff) : coeff;
 

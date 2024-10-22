@@ -4,7 +4,6 @@
 #include "spheres.h"
 #include "vec3.h"
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -21,18 +20,19 @@ main(void)
         .focus_distance = 10.0,
         .defocus_angle = 0.6,
         .vfov = 20.0,
-        .lookfrom = {13.0, 2.0, 3.0},
-        .lookat = { 0.0, 0.0, 0.0},
-        .vup = { 0.0, 1.0, 0.0},
+        .lookfrom = { { 13.0, 2.0, 3.0 } },
+        .lookat = { { 0.0, 0.0, 0.0 } },
+        .vup = { { 0.0, 1.0, 0.0 } },
         .samples_per_pixel = 500,
         .max_depth = 50,
     };
     Camera c = camera_init(&cfg);
     // TODO(juan): render to a buffer to make it more format agnostic
     Sphere ground = {
-        .center = { 0.0, -1000.0, 0.0 },
+        .center = { { 0.0, -1000.0, 0.0 } },
         .radius = 1000.0,
-        .material = { .type = MATERIAL_TYPE_LAMBERTIAN, .albedo = { 0.5, 0.5, 0.5 } }
+        .material = { .type = MATERIAL_TYPE_LAMBERTIAN,
+                   .albedo = { { 0.5, 0.5, 0.5 } } }
     };
 
     Sphere *s = (Sphere *) calloc(488, sizeof(Sphere));
@@ -45,15 +45,17 @@ main(void)
                 .y = 0.2,
                 .z = j + 0.9 * randomd(),
             };
-            Vec3 p = { 4.0, 0.2, 0 };
+            Vec3 p = {
+                { 4.0, 0.2, 0 }
+            };
             if (vec3_norm(vec3_sub(center, p)) > 0.9) {
                 double choose_material = randomd();
                 Material m;
                 if (choose_material < 0.8) {
-                    m.albedo = color_prod(color_random(), color_random());
+                    m.albedo = vec3_prod(vec3_random(), vec3_random());
                     m.type = MATERIAL_TYPE_LAMBERTIAN;
                 } else if (choose_material < 0.95) {
-                    m.albedo = color_random_in(0.5, 1.0);
+                    m.albedo = vec3_random_in(0.5, 1.0);
                     m.coefficient = randomd_in(0.0, 0.5);
                     m.type = MATERIAL_TYPE_METAL;
                 } else {
@@ -61,7 +63,7 @@ main(void)
                     m.type = MATERIAL_TYPE_DIELECTRIC;
                 }
                 s[len] =
-                    (Sphere){ .center = center, .material = m, .radius = 0.2 };
+                    (Sphere) { .center = center, .material = m, .radius = 0.2 };
                 len++;
             }
         }
@@ -69,7 +71,7 @@ main(void)
 
     // clang-format off
     s[len] = (Sphere){
-        .center = {0.0, 1.0, 0.0},
+        .center = {{0.0, 1.0, 0.0}},
         .radius = 1.0,
         .material = {
 		.type = MATERIAL_TYPE_DIELECTRIC,
@@ -78,25 +80,24 @@ main(void)
     };
     len++;
     s[len]  = (Sphere){
-        .center = {-4.0, 1.0, 0.0},
+        .center = {{-4.0, 1.0, 0.0}},
         .radius = 1.0,
         .material = {
 		.type = MATERIAL_TYPE_LAMBERTIAN,
-		.albedo={0.4, 0.2, 0.1},
+		.albedo={{0.4, 0.2, 0.1}},
 	}
     };
     len++;
     s[len]=(Sphere){
-        .center = { 4.0, 1.0, 0.0 },
+        .center = { {4.0, 1.0, 0.0} },
         .radius = 1.0,
         .material = {
 		.type = MATERIAL_TYPE_METAL,
-		.albedo = { 0.7, 0.6, 0.5 },
+		.albedo = { {0.7, 0.6, 0.5} },
 		.coefficient = 0.0,
 	}
     };
     len++;
-    assert(len < 485);
     // clang-format on
     // Dont forget the order
     Sphere_View world = sphere_view_from_ptr(s, (size_t) len);

@@ -5,7 +5,7 @@
 Vec3
 vec3_neg(Vec3 v)
 {
-    return (Vec3){
+    return (Vec3) {
         .x = -v.x,
         .y = -v.y,
         .z = -v.z,
@@ -15,7 +15,7 @@ vec3_neg(Vec3 v)
 Vec3
 vec3_add(Vec3 lhs, Vec3 rhs)
 {
-    return (Vec3){
+    return (Vec3) {
         .x = rhs.x + lhs.x,
         .y = rhs.y + lhs.y,
         .z = rhs.z + lhs.z,
@@ -25,7 +25,7 @@ vec3_add(Vec3 lhs, Vec3 rhs)
 Vec3
 vec3_sub(Vec3 lhs, Vec3 rhs)
 {
-    return (Vec3){
+    return (Vec3) {
         .x = lhs.x - rhs.x,
         .y = lhs.y - rhs.y,
         .z = lhs.z - rhs.z,
@@ -35,7 +35,7 @@ vec3_sub(Vec3 lhs, Vec3 rhs)
 Vec3
 vec3_prod(Vec3 lhs, Vec3 rhs)
 {
-    return (Vec3){
+    return (Vec3) {
         .x = lhs.x * rhs.x,
         .y = lhs.y * rhs.y,
         .z = lhs.z * rhs.z,
@@ -45,7 +45,7 @@ vec3_prod(Vec3 lhs, Vec3 rhs)
 Vec3
 vec3_div(Vec3 v, double divisor)
 {
-    return (Vec3){
+    return (Vec3) {
         .x = v.x / divisor,
         .y = v.y / divisor,
         .z = v.z / divisor,
@@ -55,7 +55,7 @@ vec3_div(Vec3 v, double divisor)
 Vec3
 vec3_mul(Vec3 v, double multiplier)
 {
-    return (Vec3){
+    return (Vec3) {
         .x = v.x * multiplier,
         .y = v.y * multiplier,
         .z = v.z * multiplier,
@@ -65,7 +65,7 @@ vec3_mul(Vec3 v, double multiplier)
 Vec3
 vec3_cross(Vec3 lhs, Vec3 rhs)
 {
-    return (Vec3){
+    return (Vec3) {
         .x = lhs.y * rhs.z - lhs.z * rhs.y,
         .y = lhs.z * rhs.x - lhs.x * rhs.z,
         .z = lhs.x * rhs.y - lhs.y * rhs.x,
@@ -97,9 +97,19 @@ vec3_normalize(Vec3 v)
 }
 
 Vec3
+vec3_random(void)
+{
+    return (Vec3) {
+        .r = randomd(),
+        .g = randomd(),
+        .b = randomd(),
+    };
+}
+
+Vec3
 vec3_random_in(double min, double max)
 {
-    return (Vec3){
+    return (Vec3) {
         .x = randomd_in(min, max),
         .y = randomd_in(min, max),
         .z = randomd_in(min, max),
@@ -107,7 +117,7 @@ vec3_random_in(double min, double max)
 }
 
 Vec3
-vec3_random_in_unit_sphere()
+vec3_random_in_unit_sphere(void)
 {
     for (;;) {
         Vec3 v = vec3_random_in(-1.0, 1.0);
@@ -118,10 +128,12 @@ vec3_random_in_unit_sphere()
 }
 
 Vec3
-vec3_random_in_unit_disk()
+vec3_random_in_unit_disk(void)
 {
     for (;;) {
-        Vec3 v = { randomd_in(-1.0, 1.0), randomd_in(-1.0, 1.0), 0.0 };
+        Vec3 v = {
+            { randomd_in(-1.0, 1.0), randomd_in(-1.0, 1.0), 0.0 }
+        };
         if (vec3_norm_squared(v) < 1.0) {
             return v;
         }
@@ -129,7 +141,7 @@ vec3_random_in_unit_disk()
 }
 
 Vec3
-vec3_random_unit_vec_in_unit_sphere()
+vec3_random_unit_vec_in_unit_sphere(void)
 {
     return vec3_normalize(vec3_random_in_unit_sphere());
 }
@@ -150,4 +162,12 @@ vec3_near_zero(Vec3 v, double epsilon)
 {
     return (fabs(v.x) < epsilon) && (fabs(v.y) < epsilon) &&
            (fabs(v.z) < epsilon);
+}
+
+Vec3
+vec3_lerp(Vec3 v, double a)
+{
+    return (Vec3) { .x = (1.0 - a) + (a * v.x),
+                    .y = (1.0 - a) + (a * v.y),
+                    .z = (1.0 - a) + (a * v.z) };
 }

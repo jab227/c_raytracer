@@ -15,5 +15,5 @@ endif()
 project(raytracer VERSION 0.1 LANGUAGES C)
 
 
-add_compile_options(-Wall -Werror -Wconversion -Wextra)
+add_compile_options(-Wall -Werror -Wconversion -Wextra -Wpedantic)
 add_subdirectory(src)

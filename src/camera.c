@@ -105,7 +105,9 @@ camera__get_ray(const Camera *c, Image_Pos pos)
 Color
 ray_color(Ray r, Sphere_View spheres, int32_t depth)
 {
-    Color attenuation = { 1.0, 1.0, 1.0 };
+    Color attenuation = {
+        { 1.0, 1.0, 1.0 }
+    };
     Ray next = r;
     // NOTE(juan): Fix shadow acne -> tmin from 0.0 to 0.001
     Interval interval = { .tmin = 0.001, .tmax = INFINITY };
@@ -117,17 +119,21 @@ ray_color(Ray r, Sphere_View spheres, int32_t depth)
             // modified was the reflectance
             Scatter_Result result = material_scatter(next, &record, EPSILON);
             if (result.hit_anything) {
-                attenuation = color_attenuate(attenuation, result.attenuation);
+                attenuation = vec3_prod(attenuation, result.attenuation);
                 next = result.scattered;
             }
         } else {
             const Vec3 unit_direction = vec3_normalize(next.direction);
             const double a = 0.5 * (unit_direction.y + 1.0);
-            Color c = color_lerp((Color){ 0.5, 0.7, 1.0 }, a);
-            return color_attenuate(c, attenuation);
+            Color c = vec3_lerp(
+                (Color) {
+                    { 0.5, 0.7, 1.0 },
+            },
+                a);
+            return vec3_prod(c, attenuation);
         }
     }
-    return (Color){ 0 };
+    return (Color) { 0 };
 }
 
 
@@ -152,7 +158,7 @@ camera_init(const Camera_Config *cfg)
     // Compute image height
     size_t img_height = (size_t) ((double) cfg->image_width / cfg->aspect_ratio);
     img_height = img_height < 1 ? 1 : img_height;
-    assert(image_height >= 1);
+    assert(img_height >= 1);
     Image_size size = { .width = cfg->image_width, .height = img_height };
 
     // Real aspect ratio
@@ -174,8 +180,8 @@ camera_init(const Camera_Config *cfg)
     };
     const Viewport vp = {
         .size = vp_size,
-        .uv = {.u = vec3_mul(u, vp_size.width),
-               .v = vec3_mul(vec3_neg(v), vp_size.height)}
+        .uv = { .u = vec3_mul(u, vp_size.width),
+               .v = vec3_mul(vec3_neg(v), vp_size.height) }
     };
 
     const Pixel_Deltas dudv = camera__compute_pixel_deltas_location(vp.uv, size);
@@ -186,8 +192,8 @@ camera_init(const Camera_Config *cfg)
     Vec3 defocus_disk_u = vec3_mul(u, defocus_radius);
     Vec3 defocus_disk_v = vec3_mul(v, defocus_radius);
 
-    return (Camera){
-        .basis = {u, v, w},
+    return (Camera) {
+        .basis = { u, v, w },
         .viewport = vp,
         .dudv = dudv,
         .center = cfg->lookfrom,
@@ -212,7 +218,7 @@ render(const Camera *c, Sphere_View world)
             for (int32_t sample = 0; sample < c->samples_per_pixel; ++sample) {
                 Ray r = camera__get_ray(c, pos);
                 Color new_color = ray_color(r, world, c->max_depth);
-                pixel = color_add(pixel, new_color);
+                pixel = vec3_add(pixel, new_color);
             }
             color_write(stdout, pixel, c->samples_per_pixel);
         }

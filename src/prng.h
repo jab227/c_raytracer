@@ -3,15 +3,15 @@
 
 double randomd(void);
 double randomd_in(double min, double max);
-#endif // PRNG_H_
+#endif  // PRNG_H_
 
 #ifdef PRNG_IMPL
 
+#include <assert.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#include <assert.h>
 
 #define MAGIC_VALUE 6364136223846793005ULL
 
@@ -63,5 +63,4 @@ randomd_in(double min, double max)
     return min + (max - min) * randomd();
 }
 
-#endif // PRNG_IMPL
-
+#endif  // PRNG_IMPL
